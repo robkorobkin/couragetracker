@@ -1,0 +1,51 @@
+body {
+	background: #ccc;
+	margin-bottom: 30px;
+}
+
+
+
+#mainBuffer {
+	width: 400px;
+	margin: 100px auto 0;
+
+}
+
+#mainContent {
+	padding: 30px;
+}
+
+input.error {
+	border: solid 1px red;
+}
+
+label.error {
+	color: red;
+}
+
+
+
+#houselist_frame {
+	height: 250px;
+	border: solid 1px #ccc;
+	overflow: auto;
+}
+.house_listitem {
+	border-bottom: dashed 1px #ccc;
+	padding: 15px;
+}
+.house_listitem:hover {
+	background: #f000ff;
+	cursor: pointer;
+	color: white;
+}
+.house_listitem:last-child {
+	border-bottom: none;
+}
+
+.house_listitem h5 {
+}
+.house_listitem p {
+	font-style: italic;
+	margin-bottom: 0;
+}
