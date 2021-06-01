@@ -85,6 +85,8 @@ ViewController = {
 		if(user.status == 'admin'){
 			$('#admin_links').show();
 		}
+		$('#houseName').html(user.current_house.housename);
+		
 	},
 
 
@@ -468,7 +470,7 @@ ViewController = {
 
 	_loadUserListTable : function(){
 		
-		var html = TemplateLoader._writeUserListTableHTML(ViewModel.userList.userList);
+		var html = TemplateLoader._writeUserListTableHTML(ViewModel.userList.mainList);
 		$('#usersTable').html(html);
 
 		$('#usersTable tr').click(function(){
@@ -478,7 +480,7 @@ ViewController = {
 	},
 
 	openUser : function(uIndex){
-		ViewModel.selected_user = ViewModel.userList.userList[uIndex]; 
+		ViewModel.selected_user = ViewModel.userList.mainList[uIndex]; 
 		ViewController.loadView('UserSummary');
 	},
 

@@ -5,6 +5,55 @@ var appConfig = {
 }
 
 
+/*************************
+*	BASE LIST - All of the List objects extend this.
+*	- search_filter
+*	- sort_by
+*************************/
+
+
+class BaseList {
+
+	constructor(){
+		this.sorting_by = '';
+		this.sorting_order = "abc";
+		this.mainList = [];
+		this.search_fields = [];
+	}
+
+
+	// SHARED METHOD = SEARCH FILTER - filters "display" field according to text match
+	search_filter(search_term){
+		search_term = search_term.toLowerCase();
+		for(let item of this.mainList){
+			item.display = false;
+			for(let f of this.search_fields) if(item[f].toLowerCase().indexOf(search_term) == 0) item.display = true;
+		}
+	}
+
+
+	// SHARED METHOD = SORT BY
+	sort_by(fieldName){
+
+		console.log('trying to sort by ' + fieldName);
+		console.log(this.mainList)
+
+		if(this.sorting_by != fieldName){
+			this.sorting_order = "abc";
+			this.mainList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
+		}
+		else if(this.sorting_order == "abc"){
+			this.sorting_order = "cba";
+			this.mainList.sort((a,b)=>{ return a[fieldName] < b[fieldName ]});	
+		}
+		else {
+			this.sorting_order = "abc";
+			this.mainList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
+		}
+		this.sorting_by = fieldName;
+	}
+
+}
 
 
 
@@ -23,7 +72,7 @@ class Resident {
 		this.display = true;
 		this.lastExam = '---';
 		this.examList = [];
-		this.lastScore = '---';
+		this.lastScore = 0;
 		this.examCount = 0;
 
 
@@ -91,17 +140,15 @@ class Resident {
 
 
 
-class ResidentList {
+class ResidentList extends BaseList {
 
 	constructor (residentJSON){
-		this.residentArray = [];
-		this.sorting_by = "movein_date";
-		this.sorting_order = "abc";
+		super();
+		this.search_fields.push('first_name', 'last_name');
 	}
 
 
 	fetchResidentList(callbackFunction){
-
 		api.callApi("getResidentList", false, function(response){
 			callbackFunction(response);
 		});
@@ -109,7 +156,7 @@ class ResidentList {
 
 	loadData(residentData){
 		for(var rJSON of residentData){
-			this.residentArray.push(new Resident(rJSON));
+			this.mainList.push(new Resident(rJSON));
 		}
 	}
 
@@ -120,16 +167,16 @@ class ResidentList {
 
 		// IF THE RESIDENT IS IN THE ARRAY, REPLACE IT
 		var match = false;
-		for(let rIndex = 0; rIndex < this.residentArray.length; rIndex++){
-			if(this.residentArray[rIndex].residentId == residentId) {
-				this.residentArray[rIndex] = newResident;
+		for(let rIndex = 0; rIndex < this.mainList.length; rIndex++){
+			if(this.mainList[rIndex].residentId == residentId) {
+				this.mainList[rIndex] = newResident;
 				match = true;
 			}
 		}
 
 		// IF NOT, PUSH IT ONTO THE END
 		if(!match){
-			this.residentArray.push(newResident);
+			this.mainList.push(newResident);
 		}
 
 	}
@@ -139,10 +186,10 @@ class ResidentList {
 		var self = this;
 		if(residentIndex == -1) callbackFunction(new Resident());
 		else {
-			var r = this.residentArray[residentIndex];
+			var r = this.mainList[residentIndex];
 			api.callApi('getFullResidentById', parseInt(r.residentId), function(resident){
 				var r = new Resident(resident);
-				self.residentArray[residentIndex] = r;
+				self.mainList[residentIndex] = r;
 				callbackFunction(r);
 			});
 		}
@@ -152,43 +199,14 @@ class ResidentList {
 	delete (residentIdToDelete, callbackFunction){
 		var self = this;
 		api.callApi('deleteResident', parseInt(residentIdToDelete), function(residentList){
-			self.residentArray = [];
+			self.mainList = [];
 			self.loadData(residentList);
 			callbackFunction();
 			
 		})
 	}
 
-	// filters down to only those with a first or last name starting with the string
-	search_filter(search_term){
-
-		search_term = search_term.toLowerCase();
-
-		for(var resident of this.residentArray){
-			if(resident.first_name.toLowerCase().indexOf(search_term) == 0) resident.display = true;
-			else if(resident.last_name.toLowerCase().indexOf(search_term) == 0) resident.display = true;
-			else resident.display = false;
-		}
-
-	}
-
-	sort_by(fieldName){
-
-		if(this.sorting_by != fieldName){
-			this.sorting_order = "abc";
-			this.residentArray.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
-		}
-		else if(this.sorting_order == "abc"){
-			this.sorting_order = "cba";
-			this.residentArray.sort((a,b)=>{ return a[fieldName] < b[fieldName ]});	
-		}
-		else {
-			this.sorting_order = "abc";
-			this.residentArray.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
-		}
-		this.sorting_by = fieldName;
-
-	}
+	
 
 }
 
@@ -319,7 +337,7 @@ class ExamList {
 
 	loadFromResidentList(residentList){
 
-		for(let resident of residentList.residentArray){
+		for(let resident of residentList.mainList){
 			for(let exam of resident.examList){
 				exam.resident = resident;
 				exam.first_name = resident.first_name;
@@ -378,53 +396,22 @@ class User {
 
 }
 
-class UserList {
+
+
+
+class UserList extends BaseList {
 
 	constructor(){
-		this.userList = [];
-		this.sorting_by = '';
+		super();
+		this.search_fields.push('first_name', 'last_name', 'housename');
 	}
 
 	loadList(userListJSON){
-		this.userList = [];
+		this.mainList.length = 0; // empty it without losing the byte address
 		for(let uJSON of userListJSON){
-			this.userList.push(new User(uJSON));
+			this.mainList.push(new User(uJSON));
 		}
 	}
-
-	sort_by(fieldName){
-
-		console.log('trying to sort user list by ' + fieldName);
-
-		if(this.sorting_by != fieldName){
-			this.sorting_order = "abc";
-			this.userList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
-		}
-		else if(this.sorting_order == "abc"){
-			this.sorting_order = "cba";
-			this.userList.sort((a,b)=>{ return a[fieldName] < b[fieldName ]});	
-		}
-		else {
-			this.sorting_order = "abc";
-			this.userList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
-		}
-		this.sorting_by = fieldName;
-	}
-
-
-	// filters down to only those with a first or last name starting with the string
-	search_filter(search_term){
-
-		search_term = search_term.toLowerCase();
-
-		for(var user of this.userList){
-			if(user.first_name.toLowerCase().indexOf(search_term) == 0) user.display = true;
-			else if(user.last_name.toLowerCase().indexOf(search_term) == 0) user.display = true;
-			else user.display = false;
-		}
-
-	}
-
 }
 
 

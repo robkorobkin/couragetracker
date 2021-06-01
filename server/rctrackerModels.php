@@ -15,8 +15,9 @@
 			if(!$payload) exit ("No payload provided");
 
 			// BUILD NEW RESIDENT OBJECT
+			//print_r($this -> user);
 			$newResident = array();
-			$newResident['houseId'] = $this -> user['houseId'];
+			$newResident['houseId'] = $this -> user['current_house']['houseId'];
 			$fields = array("status", "first_name", "last_name", "phone", "email", "movein_date", "dob");
 			foreach($fields as $f){
 				if(!isset($payload -> $f)) exit("Payload does not include the field: " . $f);

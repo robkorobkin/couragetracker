@@ -86,7 +86,10 @@ label.error {
 }
 
 #rightHeaderFrame {
-	width: 100px;
+	width: 300px;
+	padding-top: 18px;
+	padding-right: 35px;
+	text-align: right;
 }
 
 #userIcon {

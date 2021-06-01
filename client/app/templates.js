@@ -40,7 +40,7 @@ TemplateLoader = {
 
 
 		var html = '';
-		$(residentList.residentArray).each(function(index, resident){
+		$(residentList.mainList).each(function(index, resident){
 
 			if(resident.display){
 				html += '<tr id="person_' + index + '">' +

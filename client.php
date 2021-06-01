@@ -31,7 +31,7 @@
 		<!-- HEADER -->
 		<div id="header">
 			<div id="appLogoFrame">
-				<div id="appLogo"></div>
+				<img src="client/theme/logo.jpg" style="height: 25px; margin: 15px" alt="">
 			</div>
 
 			<div id="mainSearchFrame">
@@ -40,7 +40,7 @@
 			
 
 			<div id="rightHeaderFrame">
-				<div id="userIcon"></div>
+				<div id="houseName"></div>
 			</div>
 		</div>
 
