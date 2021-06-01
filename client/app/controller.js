@@ -201,6 +201,20 @@ ViewController = {
 			});
 		})
 
+		$('#back_button').click(function(){
+			ViewController.loadView('ResidentExam');
+
+			// reverse populate the view
+			let exam = ViewModel.selected_exam;
+			$('#exam_date_taken').val(exam.date_taken);
+
+			for(let qIndex = 0; qIndex < exam.answers.length; qIndex++){
+				let a = exam.answers[qIndex];
+				if(a != '') $('#question_' + qIndex + '_' + a).attr('checked', true);
+			}
+
+		})
+
 	},
 
 
@@ -233,7 +247,7 @@ ViewController = {
 		// LOAD CHART
 		ChartController.loadChart("Resident", selected_resident);
 		ChartController.openByLabel = function(label){
-			let exam = ViewModel.examList.getExamByLabel(label);
+			let exam = ViewModel.selected_resident.examList.getExamByLabel(label);
 			ViewModel.selected_exam = exam;
 			ViewController.loadView('ExamSummary');
 		}
@@ -348,6 +362,18 @@ ViewController = {
 			var exam = new Exam();
 			exam.resident = ViewModel.selected_resident;
 			ViewModel.selected_exam = exam;
+
+
+			// HANDLE EXAM DATE
+			let date_taken = $('#exam_date_taken').val();
+			if(!isValidDate(date_taken)){
+				$('#exam_date_takenlabel').addClass('error');
+				return;
+			}
+			else {
+				exam.date_taken = date_taken;
+				exam.date_taken_label = formatDateForOutput(date_taken);
+			}
 
 
 			// READ HTML FORM INTO EXAM OBJECT
@@ -508,4 +534,15 @@ ViewController = {
 	},
 
 
+}
+
+
+// Thank You Google! 
+function isValidDate(dateString) {
+	var regEx = /^\d{4}-\d{2}-\d{2}$/;
+	if(!dateString.match(regEx)) return false;  // Invalid format
+	var d = new Date(dateString);
+	var dNum = d.getTime();
+	if(!dNum && dNum !== 0) return false; // NaN value, Invalid date
+	return d.toISOString().slice(0,10) === dateString;
 }

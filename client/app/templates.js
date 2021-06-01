@@ -21,9 +21,9 @@ TemplateLoader = {
 							'<tr class="headerRow">' +
 								'<th id="control-first_name">Name</th>' +
 								'<th id="control-movein_date">Move In</th>' +
-								'<th id="control-lastExam">Last Assessed</th>' +
-								'<th id="control-examCount">Count</th>' +
-								'<th id="control-lastScore">Last Score</th>' +
+								'<th id="control-examList.lastExam">Last Assessed</th>' +
+								'<th id="control-examList.examCount">Count</th>' +
+								'<th id="control-examList.lastScore">Last Score</th>' +
 							'</tr>' +
 							'<tbody class="mainTable" id="residentTable">' +
 							'</tbody>' +
@@ -38,7 +38,6 @@ TemplateLoader = {
 
 	_writeResidentListTableHTML : function(residentList){
 
-
 		var html = '';
 		$(residentList.mainList).each(function(index, resident){
 
@@ -46,9 +45,9 @@ TemplateLoader = {
 				html += '<tr id="resident_' + parseInt(resident.residentId) + '">' +
 							'<td>' + escapeForHtml(resident.first_name) + ' ' + escapeForHtml(resident.last_name) + '</td>' + 
 							'<td>' + escapeForHtml(resident.movein_date_display) + '</td>' +
-							'<td>' + escapeForHtml(resident.lastExam) + '</td>' +
-							'<td>' + escapeForHtml(resident.examList.length) + '</td>' +
-							'<td>' + escapeForHtml(resident.lastScore) + '</td>' +
+							'<td>' + escapeForHtml(resident.examList.lastExam) + '</td>' +
+							'<td>' + escapeForHtml(resident.examList.examCount) + '</td>' +
+							'<td>' + escapeForHtml(resident.examList.lastScore) + '</td>' +
 						'</tr>';
 
 			}
@@ -90,7 +89,8 @@ TemplateLoader = {
 
 			if(exam.isNew){
 				html += '<div style="clear: both; margin-top: 30px;"></div>' +
-						'<button id="submit_button" type="button" class="btn btn-raised btn-primary">SUBMIT</submit>';
+						'<button id="submit_button" type="button" class="btn btn-raised btn-primary">SUBMIT</submit>' + 
+						'<button id="back_button" type="button" class="btn btn-raised btn-secondary">BACK</button>';
 			}
 
 			html += '</div>';
@@ -207,7 +207,7 @@ TemplateLoader = {
 
 
 	/********************************************
-	*	VIEW: RESIDENT EXAM
+	*	VIEW: TAKE EXAM
 	*
 	*	getExamHTML(exam) 						: takes exam, returns HTML for exam view
 	*	getExamSummaryHTML(examAnswer, exam) 	: takes examAnswer and exam, returns HTML to display summary
@@ -218,6 +218,14 @@ TemplateLoader = {
 
 		let html = 	this.writeResidentSubNavHTML() +
 					'<div id="resident_questionnaire_frame">' +
+						
+						// DATE TAKEN 
+						'<div class="form-group">' +
+							'<label for="exam_date_taken" id="exam_date_takenlabel" class="bmd-label-floating">Date Taken (YYYY-MM-DD):</label>' +
+							'<input type="text" class="form-control" id="exam_date_taken">' +
+						'</div>' +
+
+
 						'<table id="resident_survey_questions">';
 					
 			$(examTemplate.questions).each(function(qIndex){
@@ -229,6 +237,7 @@ TemplateLoader = {
 					btnHtml += '<div class="radio">' +
 									'<label><input type="radio" name="field_' + qIndex + '" value="' + score + '" ' +
 											'title="' + score + ' - ' + txt + '" ' +
+											'id="question_' + qIndex + '_' + score + '" '  +
 											'data-mdb-toggle="tooltip" data-mdb-placement="top"/></label>' +
 								'</div>';
 				}

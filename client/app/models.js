@@ -35,21 +35,45 @@ class BaseList {
 	// SHARED METHOD = SORT BY
 	sort_by(fieldName){
 
-		if(this.sorting_by != fieldName){
-			this.sorting_order = "abc";
-			this.mainList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
+
+		// ADDED - SUPPORTS SORTING BY SECOND-LEVEL FIELDS (JUST PUT A PERIOD IN THE SORT TERM)
+		if(fieldName.indexOf('.') !== -1){
+			let path = fieldName.split('.');
+			let p1 = path[0]; let p2 = path[1];
+
+			if(this.sorting_by != fieldName){
+				this.sorting_order = "abc";
+				this.mainList.sort((a,b)=>{ return a[p1][p2] > b[p1][p2]});	
+			}
+			else if(this.sorting_order == "abc"){
+				this.sorting_order = "cba";
+				this.mainList.sort((a,b)=>{ return a[p1][p2] < b[p1][p2]});	
+			}
+			else {
+				this.sorting_order = "abc";
+				this.mainList.sort((a,b)=>{ return a[p1][p2] > b[p1][p2]});	
+			}
+
 		}
-		else if(this.sorting_order == "abc"){
-			this.sorting_order = "cba";
-			this.mainList.sort((a,b)=>{ return a[fieldName] < b[fieldName ]});	
-		}
+
+		// NORMAL SORT AGAINST TOP LEVEL FIELDS
 		else {
-			this.sorting_order = "abc";
-			this.mainList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
+			if(this.sorting_by != fieldName){
+				this.sorting_order = "abc";
+				this.mainList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
+			}
+			else if(this.sorting_order == "abc"){
+				this.sorting_order = "cba";
+				this.mainList.sort((a,b)=>{ return a[fieldName] < b[fieldName ]});	
+			}
+			else {
+				this.sorting_order = "abc";
+				this.mainList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
+			}
 		}
+
 		this.sorting_by = fieldName;
 	}
-
 }
 
 
@@ -68,10 +92,10 @@ class Resident {
 		this.status = "Current Resident";
 		this.display = true;
 		this.lastExam = '---';
-		this.examList = [];
-		this.lastScore = 0;
-		this.examCount = 0;
-		this.examLabels = [];
+
+
+		this.examList = new ExamList();
+		
 
 
 		if(residentJSON) {
@@ -88,28 +112,7 @@ class Resident {
 
 
 			if("exams" in residentJSON && residentJSON.exams.length != 0){
-				for(var exam of residentJSON.exams){
-					this.examList.push(new Exam(exam));
-				}
-				if(this.examList.length > 0){
-					this.lastExam = formatDateForOutput(this.examList[0].date_taken);
-					this.lastExamData = this.examList[0].date_taken;	
-					this.lastScore = this.examList[0].totalScore;
-					this.examCount = this.examList.length;
-				}
-
-				// FIX LABELS
-				for(let exam of this.examList){
-					let l = exam.date_taken_label;
-					let i = 1;
-					while(this.examLabels.includes(l)){
-						i++;
-						l = exam.date_taken_label + ' #' + i;
-					}
-					exam.date_taken_label = l;
-					this.examLabels.push(l);
-				}
-				
+				this.examList.loadForResident(residentJSON.exams, this);
 			}
 			else {
 
@@ -145,16 +148,16 @@ class Resident {
 		});
 		
 	}
-
 }
-
-
 
 class ResidentList extends BaseList {
 
 	constructor (residentJSON){
 		super();
-		this.search_fields.push('first_name', 'last_name');
+		this.search_fields.push('first_name', 'last_name', 'examList.lastExam','examList.examCount','examList.lastScore');
+
+
+		
 	}
 
 
@@ -214,10 +217,9 @@ class ResidentList extends BaseList {
 			
 		})
 	}
-
-	
-
 }
+
+
 
 class ExamTemplate {
 
@@ -227,6 +229,8 @@ class ExamTemplate {
 		}
 	}
 }
+
+
 
 class Exam {
 
@@ -252,7 +256,7 @@ class Exam {
 
 		this.groupedAnswers = { 1 : [], 2 : [], 3 : [], 4 : [], 5 : [] };
 
-		for(var q of this.examTemplate.questions) this.answers.push('');
+		for(var q of this.examTemplate.questions) this.answers.push(0);
 
 		
 	
@@ -278,12 +282,10 @@ class Exam {
 
 		for(var qNum = 0; qNum < this.answers.length; qNum++){
 			var qAnswer = this.answers[qNum];
-			if(qAnswer != '' && qAnswer != ','){
+			if(qAnswer != 0 && qAnswer != ','){
 				this.questionsAnswered++;
 				this.totalScore += qAnswer;
-
-				
-				if(qAnswer != '') this.groupedAnswers[qAnswer].push(this.examTemplate.questions[qNum]);
+				if(qAnswer != 0) this.groupedAnswers[qAnswer].push(this.examTemplate.questions[qNum]);
 			}
 		}
 
@@ -299,19 +301,6 @@ class Exam {
 			var random_score =  Math.floor(Math.random() * 5) + 1;
 			this.answers.push(random_score);
 		}
-	}
-
-
-	search_filter(search_term){
-
-		search_term = search_term.toLowerCase();
-
-		for(var exam of this.examList){
-			if(exam.resident.first_name.toLowerCase().indexOf(search_term) == 0) exam.display = true;
-			else if(exam.resident.last_name.toLowerCase().indexOf(search_term) == 0) exam.display = true;
-			else exam.resident.display = false;
-		}
-
 	}
 
 
@@ -332,70 +321,92 @@ class Exam {
 	}	
 }
 
-class ExamList {
+class ExamList extends BaseList {
 
 	constructor(){
-		this.examList = [];
+		super();
+		this.mainList = [];
+		this.examLabels = [];
+
+
+		this.lastExam = 0;
+		this.lastExam_display = '---';
+		this.lastScore = 0;
+		this.examCount = 0;
+
+
+
 		this.monthList = { }
 
-		let months = new Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
-		for(let m of months) {
-			this.monthList[m] = 	{ 
-										examList : [], 
-										summary : {
-											questionsAnswered : 0,
-											totalScore : 0,
-											avgScore : 0,
-											groupedAnswers : { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
-										}
-									};
-		}
+		// let months = new Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
+		// for(let m of months) {
+		// 	this.monthList[m] = 	{ 
+		// 								examList : [], 
+		// 								summary : {
+		// 									questionsAnswered : 0,
+		// 									totalScore : 0,
+		// 									avgScore : 0,
+		// 									groupedAnswers : { 1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 0 }
+		// 								}
+		// 							};
+		// }
 	}
 
 	loadFromResidentList(residentList){
 
 		for(let resident of residentList.mainList){
-			for(let exam of resident.examList){
+			for(let exam of resident.examList.mainList){
 				exam.resident = resident;
 				exam.first_name = resident.first_name;
-				this.examList.push(exam);
+				this.mainList.push(exam);
 
-				let m = this.monthList[getMonthFromDate(exam.date_taken)];
+				// let m = this.monthList[getMonthFromDate(exam.date_taken)];
 
-				m.examList.push(exam);
-				for(let a of exam.answers){
-					m.summary.questionsAnswered++;
-					m.summary.totalScore += parseInt(a);
-					m.summary.groupedAnswers[a]++;
-				}
-				m.summary.avgScore = Math.round((m.summary.totalScore / m.summary.questionsAnswered) * 100) / 100;
+				// m.examList.push(exam);
+				// for(let a of exam.answers){
+				// 	m.summary.questionsAnswered++;
+				// 	m.summary.totalScore += parseInt(a);
+				// 	m.summary.groupedAnswers[a]++;
+				// }
+				// m.summary.avgScore = Math.round((m.summary.totalScore / m.summary.questionsAnswered) * 100) / 100;
 
 			}
 		}
 	}
 
-	getExamByLabel(label){
-		for(let e of this.examList) if(e.date_taken_label == label) return e;
+	loadForResident(residentExamJSON, resident){
+
+		for(var exam of residentExamJSON){
+			let e = new Exam(exam);
+			e.resident = resident;
+			this.mainList.push(e);
+		}
+		if(this.mainList.length > 0){
+			this.lastExam = this.mainList[0].date_taken;
+			this.lastExam_display = formatDateForOutput(this.mainList[0].date_taken);
+			this.lastScore = this.mainList[0].totalScore;
+			this.examCount = this.mainList.length;
+		}
+
+		// FIX LABELS
+		for(let exam of this.mainList){
+			let l = exam.date_taken_label;
+			let i = 1;
+			while(this.examLabels.includes(l)){
+				i++;
+				l = exam.date_taken_label + ' #' + i;
+			}
+			exam.date_taken_label = l;
+			this.examLabels.push(l);
+		}
 	}
 
-	sort_by(fieldName){
-
-		if(this.sorting_by != fieldName){
-			this.sorting_order = "abc";
-			this.examList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
-		}
-		else if(this.sorting_order == "abc"){
-			this.sorting_order = "cba";
-			this.examList.sort((a,b)=>{ return a[fieldName] < b[fieldName ]});	
-		}
-		else {
-			this.sorting_order = "abc";
-			this.examList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
-		}
-		this.sorting_by = fieldName;
-
-	}		
+	getExamByLabel(label){
+		for(let e of this.mainList) if(e.date_taken_label == label) return e;
+	}
 }
+
+
 
 class User {
 
@@ -414,11 +425,7 @@ class User {
 			if(!this.housename) this.housename = '---';
 		}
 	}
-
 }
-
-
-
 
 class UserList extends BaseList {
 
@@ -434,6 +441,8 @@ class UserList extends BaseList {
 		}
 	}
 }
+
+
 
 
 api = {
@@ -491,9 +500,6 @@ api = {
 		localStorage.access_token = '';
 		window.location = "login.php";
 	}
-
-
-
 }
 
 
@@ -581,13 +587,15 @@ var ChartController = {
 
 	get_ConfigForResident : function(resident) {
 
-		if(resident.examList.length == 0) return false;
+		let elist = resident.examList.mainList;
+
+		if(elist.length == 0) return false;
 		this._resetConfig();
 
 		// NOW INPUT DATA FROM THE ACTUAL EXAMS
 		// resident >> examList >> exam >> groupedAnswers >> { 0 : <array> }
 		let labels = [];
-		for(let exam of resident.examList){
+		for(let exam of elist){
 			let groupedAnswers = exam.groupedAnswers;
 			for(score in groupedAnswers){
 				this.config.data.datasets[score - 1].data.push(groupedAnswers[score].length);
@@ -608,6 +616,7 @@ var ChartController = {
 
 
 
+// UTILITIES
 
 function formatDateForInput(date) {
 	var d 	= (date) ? new Date(date) : new Date();
