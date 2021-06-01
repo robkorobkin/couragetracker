@@ -35,9 +35,6 @@ class BaseList {
 	// SHARED METHOD = SORT BY
 	sort_by(fieldName){
 
-		console.log('trying to sort by ' + fieldName);
-		console.log(this.mainList)
-
 		if(this.sorting_by != fieldName){
 			this.sorting_order = "abc";
 			this.mainList.sort((a,b)=>{ return a[fieldName] > b[fieldName ]});	
@@ -74,6 +71,7 @@ class Resident {
 		this.examList = [];
 		this.lastScore = 0;
 		this.examCount = 0;
+		this.examLabels = [];
 
 
 		if(residentJSON) {
@@ -98,6 +96,18 @@ class Resident {
 					this.lastExamData = this.examList[0].date_taken;	
 					this.lastScore = this.examList[0].totalScore;
 					this.examCount = this.examList.length;
+				}
+
+				// FIX LABELS
+				for(let exam of this.examList){
+					let l = exam.date_taken_label;
+					let i = 1;
+					while(this.examLabels.includes(l)){
+						i++;
+						l = exam.date_taken_label + ' #' + i;
+					}
+					exam.date_taken_label = l;
+					this.examLabels.push(l);
 				}
 				
 			}
@@ -181,15 +191,14 @@ class ResidentList extends BaseList {
 
 	}
 
-	getResidentByIndex (residentIndex, callbackFunction){
-		this.open_resident = residentIndex;
+	getResidentByResidentId (residentId, callbackFunction){
+		this.open_resident = residentId;
 		var self = this;
-		if(residentIndex == -1) callbackFunction(new Resident());
+		if(residentId == -1) callbackFunction(new Resident());
 		else {
-			var r = this.mainList[residentIndex];
-			api.callApi('getFullResidentById', parseInt(r.residentId), function(resident){
+			api.callApi('getFullResidentById', parseInt(residentId), function(resident){
 				var r = new Resident(resident);
-				self.mainList[residentIndex] = r;
+				self.loadResident(r);
 				callbackFunction(r);
 			});
 		}
@@ -225,7 +234,9 @@ class Exam {
 
 		this.examTemplate = recovery_capital_assessmentJSON; // defined in data.js
 
-		this.residentId = 0;
+		this.isNew = true;
+
+		this.resident = false;
 
 		this.date_taken = formatDateForInput(); // default submit date to when the object is constructed
 
@@ -246,6 +257,7 @@ class Exam {
 		
 	
 		if(exam){
+			this.isNew = false;
 			var fields = ["examId","residentId","houseId","version","created","updated", "date_taken"];
 			for(var f of fields) {
 				if(f in exam){
@@ -254,6 +266,7 @@ class Exam {
 			}
 			this.answers = JSON.parse(exam.answers);
 			this.processExamResults();
+			this.date_taken_label = formatDateForOutput(exam.date_taken)
 			
 		}
 
@@ -265,14 +278,17 @@ class Exam {
 
 		for(var qNum = 0; qNum < this.answers.length; qNum++){
 			var qAnswer = this.answers[qNum];
-			if(qAnswer != ''){
+			if(qAnswer != '' && qAnswer != ','){
 				this.questionsAnswered++;
 				this.totalScore += qAnswer;
-				this.groupedAnswers[qAnswer].push(this.examTemplate.questions[qNum]);
+
+				
+				if(qAnswer != '') this.groupedAnswers[qAnswer].push(this.examTemplate.questions[qNum]);
 			}
 		}
 
 		this.avgScore = Math.round((this.totalScore / this.questionsAnswered) * 100) / 100;
+
 
 	}
 
@@ -299,10 +315,11 @@ class Exam {
 	}
 
 
-	saveToServer (callbackFunction){
+
+	submitExamToServer (callbackFunction){
 
 		var payload = {
-			residentId  : parseInt(this.residentId),
+			residentId  : parseInt(this.resident.residentId),
 			date_taken  : this.date_taken,
 			version 	: this.examTemplate.version,
 			answers 	: this.answers
@@ -355,6 +372,10 @@ class ExamList {
 
 			}
 		}
+	}
+
+	getExamByLabel(label){
+		for(let e of this.examList) if(e.date_taken_label == label) return e;
 	}
 
 	sort_by(fieldName){
@@ -496,6 +517,10 @@ var ChartController = {
 		// READ SCORE OPTIONS FROM GLOBAL EXAM TEMPLATE - Could be set elsewhere, but this seems fine.
 		this.score_options = ViewModel.examTemplate.options;
 
+
+		// Prevents double-click on bubble
+		this.clicked = false;
+
 		this.config = 
 			{
 				type: 'bar',
@@ -514,7 +539,18 @@ var ChartController = {
 					canvas : {
 						//width:"1000px !important",
 						// height:"600px !important"
+					},
+					
+					events : ['click'],
+
+					onClick : function(payload, payload2){
+						if(this.clicked) return;
+						let label = payload2[0]._model.label;
+						this.clicked = true;
+						ChartController.openByLabel(label);
 					}
+
+
 				}
 			}
 
@@ -556,7 +592,7 @@ var ChartController = {
 			for(score in groupedAnswers){
 				this.config.data.datasets[score - 1].data.push(groupedAnswers[score].length);
 			}
-			this.config.data.labels.push(formatDateForOutput(exam.date_taken))
+			this.config.data.labels.push(exam.date_taken_label)
 		}
 
 		return this.config;

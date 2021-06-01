@@ -133,7 +133,7 @@ ViewController = {
 		})
 
 		$('#addresident_button').click(function(){
-			ViewController.openPerson(-1);
+			ViewController.openResident(-1);
 		})
 
 		
@@ -146,23 +146,23 @@ ViewController = {
 		$('#residentTable').html(html);
 
 		$('#residentTable tr').click(function(){
-			var rIndex = this.id.split('_')[1];
-			ViewController.openPerson(rIndex);
+			var residentId = this.id.split('_')[1];
+			ViewController.openResident(residentId);
 		})
 	},
 
 
 
-	openPerson : function(rIndex) {
+	openResident : function(residentId) {
 
-		if(rIndex == -1){
+		if(residentId == -1){
 			ViewModel.selected_resident = new Resident();
 			ViewController.loadView('ResidentInfo');
 			return;
 		}
 
 		// if rIndex == -1, this returns a blank Resident object
-		ViewModel.residentList.getResidentByIndex(rIndex, function(resident){
+		ViewModel.residentList.getResidentByResidentId(residentId, function(resident){
 			ViewModel.selected_resident = resident;
 			ViewController.loadView('ResidentDash');
 		});
@@ -189,12 +189,15 @@ ViewController = {
 
 		this.setLeftHeader('Questionnaire: ' + exam.resident.first_name + ' ' + exam.resident.last_name);	
 
+		$('#resident_clickback').click(() => { ViewController.openResident(ViewModel.selected_exam.resident.residentId )})
+
 		$('#submit_button').click(function(){
 
-			var payload = exam.exportForAPI();
-
-			api.Submit('saveExam', payload, function(){
-
+			exam.submitExamToServer((updatedResident) => {
+				var r = new Resident(updatedResident);
+				ViewModel.selected_resident = r
+				ViewModel.residentList.loadResident(r); 
+				ViewController.loadView('ResidentDash');
 			});
 		})
 
@@ -229,6 +232,11 @@ ViewController = {
 
 		// LOAD CHART
 		ChartController.loadChart("Resident", selected_resident);
+		ChartController.openByLabel = function(label){
+			let exam = ViewModel.examList.getExamByLabel(label);
+			ViewModel.selected_exam = exam;
+			ViewController.loadView('ExamSummary');
+		}
 
 
 		// MAKE AN EXAM OBJECT AND POINT APP MODEL TO IT
@@ -338,7 +346,7 @@ ViewController = {
 
 			// MAKE AN EXAM OBJECT AND POINT APP MODEL TO IT
 			var exam = new Exam();
-			exam.residentId = ViewModel.selected_resident.residentId;
+			exam.resident = ViewModel.selected_resident;
 			ViewModel.selected_exam = exam;
 
 

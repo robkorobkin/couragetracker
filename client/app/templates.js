@@ -43,14 +43,12 @@ TemplateLoader = {
 		$(residentList.mainList).each(function(index, resident){
 
 			if(resident.display){
-				html += '<tr id="person_' + index + '">' +
-
-								'<td id="field-name' + index + '">' + escapeForHtml(resident.first_name) + ' ' + escapeForHtml(resident.last_name) + '</td>' + 
-								
-								'<td>' + escapeForHtml(resident.movein_date_display) + '</td>' +
-								'<td>' + escapeForHtml(resident.lastExam) + '</td>' +
-								'<td>' + escapeForHtml(resident.examList.length) + '</td>' +
-								'<td>' + escapeForHtml(resident.lastScore) + '</td>' +
+				html += '<tr id="resident_' + parseInt(resident.residentId) + '">' +
+							'<td>' + escapeForHtml(resident.first_name) + ' ' + escapeForHtml(resident.last_name) + '</td>' + 
+							'<td>' + escapeForHtml(resident.movein_date_display) + '</td>' +
+							'<td>' + escapeForHtml(resident.lastExam) + '</td>' +
+							'<td>' + escapeForHtml(resident.examList.length) + '</td>' +
+							'<td>' + escapeForHtml(resident.lastScore) + '</td>' +
 						'</tr>';
 
 			}
@@ -71,9 +69,14 @@ TemplateLoader = {
 	writeExamSummaryMainHTML : function(exam){
 
 
-		var html = 	'<div id="survery_sumary">' +
-						'<b>Survey Summary</b><br />' +
-						'Score: ' + escapeForHtml(exam.totalScore) + 
+		var html = 	'<div id="survey_summary">' +
+						'<b>Recovery Capital Assessment of:</b>' +
+						'<br /><a id="resident_clickback" href="#">' + 
+							exam.resident.first_name + ' ' + exam.resident.last_name + 
+						'</a>' +
+						'<br /><br /><b>Survey Summary</b><br />' +
+						'Date Taken: ' + escapeForHtml(exam.date_taken_label) +
+						'<br />Score: ' + escapeForHtml(exam.totalScore) + 
 						'<br />Average Score: ' + escapeForHtml(exam.avgScore) +
 						'<br /><br /><br /><i>Questions Ranked:</i><br /><br />';
 
@@ -85,8 +88,12 @@ TemplateLoader = {
 
 			html += qGroups.reverse().join('<br /><br />');
 
-			html += 	'<button id="submit_button" type="button" class="btn btn-raised btn-primary">SUBMIT</submit>' +
-					'</div>';
+			if(exam.isNew){
+				html += '<div style="clear: both; margin-top: 30px;"></div>' +
+						'<button id="submit_button" type="button" class="btn btn-raised btn-primary">SUBMIT</submit>';
+			}
+
+			html += '</div>';
 
 		return html;
 	},
