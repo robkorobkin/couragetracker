@@ -131,7 +131,7 @@
 			$residents = $this -> db -> getResponse();
 
 			// get exams and append to resident list
-			$sql = 	"SELECT e.residentId, e.version, e.answers, e.date_taken " .
+			$sql = 	"SELECT e.residentId, e.version, e.answers, e.date_taken, e.examId " .
 					"FROM exams e, residents r where e.residentId = r.residentId AND r.houseId=" . $houseId . 
 					" AND e.status=\"LIVE\"" .
 					" ORDER BY e.date_taken DESC";
@@ -145,7 +145,8 @@
 				$exams[$e['residentId']][] = array(
 					"answers" => $e['answers'], 
 					"v" => $e['version'],
-					"date_taken" => $e['date_taken']
+					"date_taken" => $e['date_taken'],
+					"examId" => $e['examId']
 				);
 			}
 

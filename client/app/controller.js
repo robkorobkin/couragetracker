@@ -27,7 +27,7 @@ var ViewModel = {
 
 /* LAUNCH THE APP */
 $(function(){
-	ViewController.loadResidentList();
+	ViewController.loadView('ResidentList');
 	api.loadUser = function(user){
 		ViewController.loadUser(user);
 	}
@@ -92,65 +92,15 @@ ViewController = {
 
 // RESIDENT LIST VIEW
 
-	loadResidentList : function(){
+	loadResidentList : function(callbackFunction){
 
 		ViewModel.residentList.fetchResidentList(function(response){
 			ViewModel.residentList.loadData(response);
 			ViewModel.examList.loadFromResidentList(ViewModel.residentList);
-			ViewController.loadView("ResidentList");
+			callbackFunction();
 		});
 
 	},
-
-	loadResidentListView : function(){
-
-
-		// LOAD THE HTML
-		this.setLeftHeader('Residents' +
-							'<button type="button" class="btn btn-raised btn-success" ' +
- 							'style="float: right" ' +
- 							// ' style="clear: both; display: block; margin: 10px 0 20px;"' +
- 							' id="addresident_button"> Add Resident</button>');
-
-		this.setMainBody(TemplateLoader.writeResidentListMainHTML());
-		this._loadResidentListTable();
-
-		$('#mainTable th').click((e)=>{
-			let sort_field = e.target.id.split('-')[1];
-			ViewModel.residentList.sort_by(sort_field);
-			ViewController._loadResidentListTable();
-		});
-
-
-		// ATTACH SEARCH BAR
-		$('#mainSearch').off("keyup").keyup(function(){
-
-			var search_term = $('#mainSearch').val();
-
-			ViewModel.residentList.search_filter(search_term);
-			
-			ViewController._loadResidentListTable();
-		})
-
-		$('#addresident_button').click(function(){
-			ViewController.openResident(-1);
-		})
-
-		
-	},
-
-	_loadResidentListTable : function(){
-		
-		var html = TemplateLoader._writeResidentListTableHTML(ViewModel.residentList);
-
-		$('#residentTable').html(html);
-
-		$('#residentTable tr').click(function(){
-			var residentId = this.id.split('_')[1];
-			ViewController.openResident(residentId);
-		})
-	},
-
 
 
 	openResident : function(residentId) {
@@ -176,6 +126,62 @@ ViewController = {
 		ViewController.loadView('ResidentDash');
 	},
 
+
+
+
+	loadResidentListView : function(){
+
+
+		// LOAD THE HTML
+		this.setLeftHeader('Residents' +
+							'<button type="button" class="btn btn-raised btn-success" ' +
+ 							'style="float: right" ' +
+ 							// ' style="clear: both; display: block; margin: 10px 0 20px;"' +
+ 							' id="addresident_button"> Add Resident</button>');
+
+		this.setMainBody(TemplateLoader.writeResidentListMainHTML());
+		
+
+		$('#mainTable th').click((e)=>{
+			let sort_field = e.target.id.split('-')[1];
+			ViewModel.residentList.sort_by(sort_field);
+			ViewController._loadResidentListTable();
+		});
+
+
+		// ATTACH SEARCH BAR
+		$('#mainSearch').off("keyup").keyup(function(){
+			var search_term = $('#mainSearch').val();
+			ViewModel.residentList.search_filter(search_term);
+			ViewController._loadResidentListTable();
+		})
+
+		$('#addresident_button').click(function(){
+			ViewController.openResident(-1);
+		})
+
+		this.loadResidentList(function(){
+			ViewController._loadResidentListTable();
+		})
+
+		
+	},
+
+	_loadResidentListTable : function(){
+		
+		var html = TemplateLoader._writeResidentListTableHTML(ViewModel.residentList);
+
+		$('#residentTable').html(html);
+
+		$('#residentTable tr').click(function(){
+			var residentId = this.id.split('_')[1];
+			ViewController.openResident(residentId);
+		})
+	},
+
+
+
+	
 
 
 
@@ -357,6 +363,10 @@ ViewController = {
 		this.handleResidentSubNav('takenew');
 
 
+		$('#exam_date_taken').val(formatDateForInput());
+
+
+
 		$('#save_btn').click(function(){
 
 
@@ -431,7 +441,6 @@ ViewController = {
 		// LOAD THE HTML
 		this.setLeftHeader('Recovery Capital Assessments:');
 		this.setMainBody(TemplateLoader.writeExamListMainHTML());
-		this._loadExamListTable(ViewModel.examList);
 
 		$('#mainTable th').click((e)=>{
 			let sort_field = e.target.id.split('-')[1];
@@ -446,6 +455,12 @@ ViewController = {
 			ViewModel.examList.search_filter(search_term);
 			ViewController._loadExamListTable();
 		})
+
+
+		ViewController.loadResidentList(function(){
+			ViewController._loadExamListTable(ViewModel.examList);
+		})
+
 		
 	},
 

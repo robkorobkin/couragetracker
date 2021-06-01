@@ -168,6 +168,7 @@ class ResidentList extends BaseList {
 	}
 
 	loadData(residentData){
+		this.mainList = [];
 		for(var rJSON of residentData){
 			this.mainList.push(new Resident(rJSON));
 		}
@@ -358,6 +359,7 @@ class ExamList extends BaseList {
 	}
 
 	loadFromResidentList(residentList){
+		this.mainList = [];
 
 		for(let resident of residentList.mainList){
 			for(let exam of resident.examList.mainList){
