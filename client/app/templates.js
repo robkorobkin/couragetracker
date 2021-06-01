@@ -57,14 +57,6 @@ TemplateLoader = {
 	},
 
 
-
-	/********************************************
-	*	VIEW: RESIDENT EDITOR
-	*
-	*	getResidentListViewHTML(residents) 		: takes residents list, returns HTML for view
-	*	_getResidentListTableHTML(residents) 	: takes residents array, returns HTML for table sub-component
-	********************************************/
-
 	writeExamSummaryMainHTML : function(exam){
 
 
@@ -92,11 +84,24 @@ TemplateLoader = {
 						'<button id="submit_button" type="button" class="btn btn-raised btn-primary">SUBMIT</submit>' + 
 						'<button id="back_button" type="button" class="btn btn-raised btn-secondary">BACK</button>';
 			}
+			else {
 
+				html +=		'<br /><br /><br /><br /><h5>Delete Questionnaire</h5><i>This cannot be undone.</i><br /><br />' +
+							'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>';
+			}
 			html += '</div>';
 
 		return html;
 	},
+
+
+
+	/********************************************
+	*	VIEW: RESIDENT EDITOR
+	*
+	*	getResidentListViewHTML(residents) 		: takes residents list, returns HTML for view
+	*	_getResidentListTableHTML(residents) 	: takes residents array, returns HTML for table sub-component
+	********************************************/
 
 
 	// JUST DOES THE HTML - STATE AND EVENTS ARE SET IN CONTROLLER
@@ -274,7 +279,7 @@ TemplateLoader = {
 						'<table id="mainTable">' +
 							'<tr class="headerRow">' +
 								'<th id="control-date_taken">Date</th>' +
-								'<th id="control-first_name">Name</th>' +
+								'<th id="control-resident.first_name">Name</th>' +
 								'<th id="control-avgScore">Average Score</th>' +
 								'<th id="control-totalScore">Total Score</th>' +
 							'</tr>' +
@@ -290,7 +295,7 @@ TemplateLoader = {
 
 	_writeExamListTableHTML : function(examList){
 		var html = '';
-		$(examList.examList).each(function(index, exam){
+		$(examList.mainList).each(function(index, exam){
 			if(exam.display){
 				html += '<tr id="person_' + index + '">' +
 							'<td id="field-name' + index + '">' + 

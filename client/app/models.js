@@ -318,7 +318,12 @@ class Exam {
 		api.callApi('createExam', payload, function(resident){
 			callbackFunction(resident);
 		})
-	}	
+	}
+
+	delete (callbackFunction){
+		var payload = this.examId;
+		api.callApi('deleteExam', this.examId, callbackFunction);
+	}
 }
 
 class ExamList extends BaseList {
@@ -356,8 +361,6 @@ class ExamList extends BaseList {
 
 		for(let resident of residentList.mainList){
 			for(let exam of resident.examList.mainList){
-				exam.resident = resident;
-				exam.first_name = resident.first_name;
 				this.mainList.push(exam);
 
 				// let m = this.monthList[getMonthFromDate(exam.date_taken)];

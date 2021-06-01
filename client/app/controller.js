@@ -169,6 +169,13 @@ ViewController = {
 	
 	},
 
+	reloadResident : function(updatedResident){
+		let r = new Resident(updatedResident);
+		ViewModel.selected_resident = r
+		ViewModel.residentList.loadResident(r); 
+		ViewController.loadView('ResidentDash');
+	},
+
 
 
 
@@ -192,13 +199,7 @@ ViewController = {
 		$('#resident_clickback').click(() => { ViewController.openResident(ViewModel.selected_exam.resident.residentId )})
 
 		$('#submit_button').click(function(){
-
-			exam.submitExamToServer((updatedResident) => {
-				var r = new Resident(updatedResident);
-				ViewModel.selected_resident = r
-				ViewModel.residentList.loadResident(r); 
-				ViewController.loadView('ResidentDash');
-			});
+			exam.submitExamToServer(ViewController.reloadResident);
 		})
 
 		$('#back_button').click(function(){
@@ -213,6 +214,12 @@ ViewController = {
 				if(a != '') $('#question_' + qIndex + '_' + a).attr('checked', true);
 			}
 
+		})
+
+		$('#delete_button').click(function(){
+			if(confirm("Are you sure you want to delete this questionnaire?")){
+				ViewModel.selected_exam.delete(ViewController.reloadResident)
+			}
 		})
 
 	},
@@ -256,9 +263,9 @@ ViewController = {
 		// MAKE AN EXAM OBJECT AND POINT APP MODEL TO IT
 		$('#postrandomexam_button').click( ()=> {
 			var exam = new Exam();
-			exam.residentId = ViewModel.selected_resident.residentId;
+			exam.resident = ViewModel.selected_resident;
 			exam.generateRandomResults();
-			exam.saveToServer((resident)=>{
+			exam.submitExamToServer((resident)=>{
 				var r = new Resident(resident);
 				ViewModel.selected_resident = r
 				ViewModel.residentList.loadResident(r); 
@@ -322,12 +329,7 @@ ViewController = {
 
 			// POST TO API AND UPDATE MODEL
 			if(goAhead){
-				selected_person.save(function(updatedResident){
-					var r = new Resident(updatedResident);
-					ViewModel.selected_resident = r
-					ViewModel.residentList.loadResident(r); 
-					ViewController.loadView('ResidentDash');
-				});
+				selected_person.save(ViewController.reloadResident);
 			}
 			
 
@@ -459,7 +461,7 @@ ViewController = {
 	},
 
 	openExam : function(eIndex){
-		ViewModel.selected_exam = ViewModel.examList.examList[eIndex]; 
+		ViewModel.selected_exam = ViewModel.examList.mainList[eIndex]; 
 		ViewController.loadView('ExamSummary');
 	},
 

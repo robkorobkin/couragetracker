@@ -109,8 +109,8 @@
 			$resident = $this -> getResidentById($residentId);
 
 			// QUERY DATABASE FOR EXAMS
-			$config['where'] = 'residentId=' . $residentId;
-			$this -> db -> select("exams", $config);
+			$sql = 'SELECT * FROM exams WHERE residentId=' . $residentId . " AND status=\"LIVE\"";
+			$this -> db -> sql($sql);
 			$response = $this -> db -> getResponse();
 			$resident['exams'] = $response;
 
@@ -133,7 +133,10 @@
 			// get exams and append to resident list
 			$sql = 	"SELECT e.residentId, e.version, e.answers, e.date_taken " .
 					"FROM exams e, residents r where e.residentId = r.residentId AND r.houseId=" . $houseId . 
+					" AND e.status=\"LIVE\"" .
 					" ORDER BY e.date_taken DESC";
+
+			//echo $sql; exit();
 			$this -> db -> sql($sql);
 			$examsRaw = $this -> db -> getResponse();
 
@@ -192,6 +195,7 @@
 
 			$newExam['created'] = date('Y-m-d h:i:s A');
 			$newExam['updated'] = date('Y-m-d h:i:s A');
+			$newExam['status']	= 'LIVE';
 			
 	
 			// INSERT IT
@@ -204,6 +208,25 @@
 					
 			$this->db->sql($sql);
 
+
+			return $this -> getFullResidentById($residentId);
+
+		}
+
+		function deleteExam($examId){
+			if(!$examId || !is_int(intval($examId))) exit ("No payload provided");
+
+			// LOOK UP EXAM AND THE GET RESIDENT ID
+			$sql = 'SELECT * FROM exams where examId=' . $examId;
+			$this -> db -> sql($sql);
+			$response = $this -> db -> getResponse();
+			if(count($response) == 0) exit("The fuck? The exam you're trying to delete doesn't exist.");
+			$residentId = intval($response[0]['residentId']);
+
+			// WE SHOULD PROBABLY MAKE SURE THAT THE USER HAS PERMISSION TO DO THIS
+
+			$sql = 'UPDATE exams set status="DELETED" where examId=' . $examId;
+			$this -> db -> sql($sql);
 
 			return $this -> getFullResidentById($residentId);
 
