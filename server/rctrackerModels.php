@@ -109,7 +109,7 @@
 			$resident = $this -> getResidentById($residentId);
 
 			// QUERY DATABASE FOR EXAMS
-			$sql = 'SELECT * FROM exams WHERE residentId=' . $residentId . " AND status=\"LIVE\"";
+			$sql = 'SELECT examId, answers, version, date_taken FROM exams WHERE residentId=' . $residentId . " AND status=\"LIVE\"";
 			$this -> db -> sql($sql);
 			$response = $this -> db -> getResponse();
 			$resident['exams'] = $response;

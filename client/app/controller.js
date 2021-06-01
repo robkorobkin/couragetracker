@@ -306,8 +306,7 @@ ViewController = {
 
 		// HANDLE BUTTON EVENTS
 		$('#cancel_button').click(function(){
-			ViewModel.selected_resident = false;
-			ViewController.loadView('ResidentList');
+			ViewController.loadView('ResidentDash');
 		})
 
 
