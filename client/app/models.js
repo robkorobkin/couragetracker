@@ -91,6 +91,8 @@ class Resident {
 		this.movein_date = '';
 		this.status = "Current Resident";
 		this.display = true;
+		this.created = '';
+		this.updated = '';
 		this.lastExam = '---';
 
 
@@ -135,7 +137,9 @@ class Resident {
 			req[f] = this[f];
 		}
 
-		if(this.isNew){
+		let isNew = this.isNew;
+
+		if(isNew){
 			var method = "createResident" ;
 		}
 		else {
@@ -144,6 +148,7 @@ class Resident {
 		}
 		
 		api.callApi(method, req, function(response){
+			response.isNew = isNew;
 			callbackFunction(response);
 		});
 		
@@ -472,7 +477,7 @@ api = {
 			req.access_token = localStorage.access_token;
 		}
 		else {
-			window.location = "login.php";
+			window.location = "index.php";
 		}
 
 
@@ -503,7 +508,7 @@ api = {
 
 	logout : function(){
 		localStorage.access_token = '';
-		window.location = "login.php";
+		window.location = "index.php";
 	}
 }
 

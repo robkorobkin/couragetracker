@@ -20,11 +20,7 @@ function changeView(viewName){
 $(function(){
 
 	let html = '';
-	for(let house of house_list){
-		house.display = true;
-	}
-
-
+	
 	$('#signup_button').click(function(){
 		changeView('register')
 	})
@@ -38,7 +34,7 @@ $(function(){
 		changeView('houseregister')
 	})
 	$('#proceed_button').click(function(){
-		window.location = "login.php";
+		window.location = "index.php";
 	})
 
 	// FORGOT / RESET FLOW
@@ -58,7 +54,7 @@ $(function(){
 		resetPW();
 	})
 	$('#gotologin_button').click(function(){
-		window.location = "login.php";
+		window.location = "index.php";
 	})
 
 
@@ -97,17 +93,25 @@ $(function(){
 	}
 	if(mode == "pickhouse"){
 
-		api.callApi('user_confirmaccesstoken', access_token, (response) => {
+		api.callApi('user_fetchHouseList', access_token, (response) => {
 
 			if("status" in response && response.status == "error"){
 				$('#load_error').show();
 				return;
 			}
 
-			ViewModel.user = response.user;
+			ViewModel.house_list = response;
+			for(let house of ViewModel.house_list){
+				house.display = true;
+			}
+
 
 			$('#houserequest_form').show();
 			$('#first_name_span').html(escapeForScreen(ViewModel.user.first_name));
+
+			// WRITE HOUSE LIST
+			writeHouseList();
+
 
 		});
 	}
@@ -166,16 +170,21 @@ LOGIN USER
 				localStorage.access_token = response.access_token;
 				localStorage.userJSON = JSON.stringify(response.user);
 
-
 				// if user has an active account, just bring them into the app
-				if(response.status == "active"){
+				if(response.status == "active" || response.status == "admin"){
 					window.location = "client.php";
 				}
 
 				// if user has a "raw" account, bring them to pick a house
 				if(response.status == "raw"){
-					window.location = "login.php?v=pickhouse&access_token=" + response.access_token;
+					$('#register_confirm').show();
+					$('#login_form').hide();
 				}
+
+				if(response.status == 'confirmed'){
+					window.location = "index.php?v=pickhouse&access_token=" + response.access_token;				
+				}
+
 
 			})
 		}		
@@ -349,9 +358,10 @@ RESET PASSWORD
 
 	function writeHouseList(){
 		let html = '';
-		for(house of house_list){
+		for(house of ViewModel.house_list){
+			house.address = house.street + ', ' + house.city + ', ' + house.state;
 			if(house.display){
-				html += 	'<div class="house_listitem" id="house_' + parseInt(house.houseid) + '">' +
+				html += 	'<div class="house_listitem" id="house_' + parseInt(house.houseId) + '">' +
 								'<h5>'+ house.housename +'</h5>' +
 								'<p>' + house.address + '</p>' +
 							'</div>';
@@ -363,11 +373,10 @@ RESET PASSWORD
 			selectHouse(houseid);
 		})
 	}
-	writeHouseList();
 
 	$('#houserequest_housename').keyup(function(event){
 		let search_term = $('#houserequest_housename').val().toLowerCase();
-		for(house of house_list){
+		for(house of ViewModel.house_list){
 			if(house.housename.toLowerCase().indexOf(search_term) !== -1) house.display = true;
 			else if(house.address.toLowerCase().indexOf(search_term) !== -1) house.display = true;
 			else house.display = false;
@@ -376,7 +385,7 @@ RESET PASSWORD
 	});
 
 	function selectHouse(houseid){
-		let house = house_list.find(house => house.houseid = houseid);
+		let house = ViewModel.house_list.find(house => house.houseId == houseid);
 		ViewModel.requestedHouse = house;
 
 		let html = 	'<p>Click submit to request access to:</p>' +
@@ -394,7 +403,7 @@ RESET PASSWORD
 		$('#requestaccess_button').click(function(){
 			let req = {
 				userId : ViewModel.user.userId,
-				houseId : ViewModel.requestedHouse.houseid
+				houseId : ViewModel.requestedHouse.houseId
 			}
 			api.callApi('user_requestHouseAssignment', req, function(response){
 				if(response.status == "error"){
@@ -474,23 +483,38 @@ api = {
 
 	apiPath : appConfig.api_url,
 
+	access_token : '',
+
+	initial_request : true,
+
 
 	callApi : function(method, payload, callbackFunction){
 
 		var req = {
 			method: method,
 			payload: payload,
-			access_token : access_token
+			access_token : access_token,
+			initial_request : this.initial_request
+		}
+
+		let apiCallBack = function(response){
+			if('user' in response) {
+				ViewModel.user = response.user;
+				response = response.response;
+			}
+			callbackFunction(response);
 		}
 
 		$.ajax({
 			type: 'POST',
 			url: this.apiPath,
 			data: JSON.stringify(req),
-			success: callbackFunction,
+			success: apiCallBack,
 			contentType: "application/json",
 			dataType: 'json'
 		});
+
+		this.initial_request = false;
 
 		
 	}

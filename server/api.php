@@ -1,6 +1,6 @@
 <?php
 
-	define("APP_URL", "http://localhost/courage_house/ch_app");
+	define("APP_URL", "http://localhost/_rctracker");
 
 
 	include("php_crud.php");
@@ -20,16 +20,31 @@
 	}
 
 
+	// LOAD THE METHOD
+	if(!isset($req -> method)) {
+		echo "No method specified.";
+		exit();
+	}
+	$method = $req -> method;
+
+
 	// AUTHENTICATION
 	// ToDo
 	// Should run here, every time web hook is hit.
 	global $userModel;
 	$userModel = new UserModel();
+
+	// HANDLE NO ACCESS TOKEN (NOT LOGGED IN)
 	if(!isset($req -> access_token)) {
 		$userModel -> logged_in = false;
+		if($method != "user_login" && $method != "sendReminder") exit("No access token. We both know you shouldn't be here.");
 	}
+
+	// VALIDATE ACCESS TOKEN / LOAD USER
 	else {
 		$user = $userModel -> loadUser($req -> access_token);
+
+		// HANDLE BAD ACCESS TOKEN
 		if(!$user) {
 			echo json_encode(array("status" => "error", "message" => "Bad access token."), JSON_PRETTY_PRINT);
 			exit();
@@ -38,11 +53,7 @@
 	
 
 
-	if(!isset($req -> method)) {
-		echo "No method specified.";
-		exit();
-	}
-	$method = $req -> method;
+	
 
 
 	// INSTANTIATE MODEL (if it starts, user_... open user model) AND SEE IF IT SUPPORTS REQUESTED METHOD
@@ -65,7 +76,7 @@
 	$payload 	= (isset($req -> payload)) ? $req -> payload : false;
 	$response 	= $model -> $method($payload);
 
-	if(isset($req -> initial_request) && $req -> initial_request){
+	if(isset($req -> initial_request) && $req -> initial_request && $req -> access_token != '' ){
 		$response = array(
 			"user" => $user,
 			"response" => $response

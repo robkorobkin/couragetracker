@@ -45,7 +45,7 @@ TemplateLoader = {
 				html += '<tr id="resident_' + parseInt(resident.residentId) + '">' +
 							'<td>' + escapeForHtml(resident.first_name) + ' ' + escapeForHtml(resident.last_name) + '</td>' + 
 							'<td>' + escapeForHtml(resident.movein_date_display) + '</td>' +
-							'<td>' + escapeForHtml(resident.examList.lastExam) + '</td>' +
+							'<td>' + escapeForHtml(formatDateForOutput(resident.examList.lastExam)) + '</td>' +
 							'<td>' + escapeForHtml(resident.examList.examCount) + '</td>' +
 							'<td>' + escapeForHtml(resident.examList.lastScore) + '</td>' +
 						'</tr>';
@@ -127,8 +127,8 @@ TemplateLoader = {
 		let html = 	this.writeResidentSubNavHTML() +
 					'<div class="chart-container" style="position: relative; height:450px; width:800px">' +
 						'<canvas id="myChart"></canvas>' +
-					'</div>' +
-					'<button id="postrandomexam_button" type="button" class="btn btn-raised btn-secondary">POST RANDOM EXAM</button>';
+					'</div>' 
+					+ '<button id="postrandomexam_button" type="button" class="btn btn-raised btn-secondary">POST RANDOM EXAM</button>';
 
 		// SHOW THE TABLE OF RECENT EXAMS
 
@@ -299,7 +299,7 @@ TemplateLoader = {
 			if(exam.display){
 				html += '<tr id="person_' + index + '">' +
 							'<td id="field-name' + index + '">' + 
-								escapeForHtml(exam.date_taken) + 
+								escapeForHtml(formatDateForOutput(exam.date_taken)) + 
 							'</td>' + 
 							'<td>' + 
 								escapeForHtml(exam.resident.first_name) + ' ' + escapeForHtml(exam.resident.last_name) + 

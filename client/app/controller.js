@@ -22,7 +22,9 @@ var ViewModel = {
 
 	selected_exam : false,
 
-	selected_user : false
+	selected_user : false,
+
+	isLoadingNewResident : false
 }
 
 /* LAUNCH THE APP */
@@ -123,7 +125,13 @@ ViewController = {
 		let r = new Resident(updatedResident);
 		ViewModel.selected_resident = r
 		ViewModel.residentList.loadResident(r); 
-		ViewController.loadView('ResidentDash');
+		ViewModel.isLoadingNewResident = (updatedResident.isNew);
+
+		if(updatedResident.isNew){
+			
+			ViewController.loadView('ResidentList');
+		}
+		else ViewController.loadView('ResidentDash');
 	},
 
 
@@ -161,6 +169,14 @@ ViewController = {
 		})
 
 		this.loadResidentList(function(){
+
+			// a bit of a hack - if you just added one, put it on top
+			if(ViewModel.isLoadingNewResident){
+				ViewModel.residentList.sorting_order = "abc";
+				ViewModel.residentList.sorting_by = "created";
+				ViewModel.residentList.sort_by("created")				
+			}
+``
 			ViewController._loadResidentListTable();
 		})
 
@@ -178,18 +194,6 @@ ViewController = {
 			ViewController.openResident(residentId);
 		})
 	},
-
-
-
-	
-
-
-
-
-// EXAM VIEW
-
-	
-
 
 
 // EXAM SUMMARY VIEW
@@ -231,9 +235,7 @@ ViewController = {
 	},
 
 
-
-
-// PERSON EDITOR VIEW
+// PERSON / TAKE EXAM VIEW
 
 	// SHARED SUBNAV
 	handleResidentSubNav : function(mode){
@@ -251,18 +253,35 @@ ViewController = {
 	// DASHBOARD VIEW - LOADS CHART, HAS "POST RANDOM" BUTTON, ToDo: SHOW EXAM TABLE
 	loadResidentDashView : function (){
 
-		var selected_resident = ViewModel.selected_resident;
+		let selected_resident = ViewModel.selected_resident;
+		ViewModel.examList = selected_resident.examList;
+
 
 		// MAIN BODY + LOAD
-		this.setMainBody(TemplateLoader.writeResidentDashMainHTML(selected_resident));
+		let main_html = TemplateLoader.writeResidentDashMainHTML(selected_resident) +
+						'<br /><br /><br />' + 
+						TemplateLoader.writeExamListMainHTML();
+
+
+		this.setMainBody(main_html);
+
 		this.handleResidentSubNav('dash');
 
+
+		this._loadExamListTable();
+		
+
 		// LOAD CHART
-		ChartController.loadChart("Resident", selected_resident);
-		ChartController.openByLabel = function(label){
-			let exam = ViewModel.selected_resident.examList.getExamByLabel(label);
-			ViewModel.selected_exam = exam;
-			ViewController.loadView('ExamSummary');
+		if(ViewModel.examList.length == 0){
+			ChartController.loadChart("Resident", selected_resident);
+			ChartController.openByLabel = function(label){
+				let exam = ViewModel.selected_resident.examList.getExamByLabel(label);
+				ViewModel.selected_exam = exam;
+				ViewController.loadView('ExamSummary');
+			}	
+		}
+		else {
+			$('.chart-container').html('<p>No recovery capital assessments have been recorded yet. Hit "TAKE NEW" above to begin one.</p>');
 		}
 
 
@@ -279,7 +298,6 @@ ViewController = {
 			})
 		});
 	},
-
 
 
 	loadResidentInfoView : function() {
@@ -334,6 +352,7 @@ ViewController = {
 
 			// POST TO API AND UPDATE MODEL
 			if(goAhead){
+
 				selected_person.save(ViewController.reloadResident);
 			}
 			
@@ -349,9 +368,8 @@ ViewController = {
 				})
 			}
 		})
-
-
 	},
+
 
 	loadResidentExamView : function(){
 
@@ -419,12 +437,12 @@ ViewController = {
 			}
 			
 		})
-
 	},
 
 
 
 
+// EXAM LIST VIEW
 
 
 	/********************************************
@@ -441,9 +459,24 @@ ViewController = {
 		this.setLeftHeader('Recovery Capital Assessments:');
 		this.setMainBody(TemplateLoader.writeExamListMainHTML());
 
-		$('#mainTable th').click((e)=>{
+		ViewController.loadResidentList(function(){
+			ViewController._loadExamListTable(ViewModel.examList);
+		})
+
+		
+	},
+
+
+
+	_loadExamListTable : function(){
+		
+		var html = TemplateLoader._writeExamListTableHTML(ViewModel.examList);
+		$('#examTable').html(html);
+
+		$('#mainTable th').off("click").click((e)=>{
 			let sort_field = e.target.id.split('-')[1];
 			ViewModel.examList.sort_by(sort_field);
+			$('#mainTable th').off("click");
 			ViewController._loadExamListTable();
 		});
 
@@ -455,18 +488,6 @@ ViewController = {
 			ViewController._loadExamListTable();
 		})
 
-
-		ViewController.loadResidentList(function(){
-			ViewController._loadExamListTable(ViewModel.examList);
-		})
-
-		
-	},
-
-	_loadExamListTable : function(){
-		
-		var html = TemplateLoader._writeExamListTableHTML(ViewModel.examList);
-		$('#examTable').html(html);
 
 		$('#examTable tr').click(function(){
 			var eIndex = this.id.split('_')[1];
@@ -480,6 +501,8 @@ ViewController = {
 	},
 
 
+
+// ADMIN - USER LIST / FEATURE
 
 	/********************************************
 	*	VIEW: USERS LIST
@@ -520,7 +543,7 @@ ViewController = {
 
 	_loadUserListTable : function(){
 		
-		var html = TemplateLoader._writeUserListTableHTML(ViewModel.userList.mainList);
+		let html = TemplateLoader._writeUserListTableHTML(ViewModel.userList.mainList);
 		$('#usersTable').html(html);
 
 		$('#usersTable tr').click(function(){
@@ -539,7 +562,7 @@ ViewController = {
 		let user = ViewModel.selected_user;
 
 		// LOAD THE HTML
-		this.setLeftHeader(user.first_name + ' ' + user.last_name);
+		this.setLeftHeader(escapeForHtml(user.first_name) + ' ' + escapeForHtml(user.last_name));
 		this.setMainBody(TemplateLoader.writeUserMainHTML(user));
 
 		api.callApi('user_fetchUserByUserId', user.userId, function(userJSON){
@@ -548,8 +571,6 @@ ViewController = {
 		})
 		
 	},
-
-
 }
 
 

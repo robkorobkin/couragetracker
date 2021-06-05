@@ -99,7 +99,6 @@
 
 		<!-- THEN LOAD THE APP, and awwayyy we gooo! -->
 		<script src="client/app/login.js"></script>
-		<script src="client/app/houselist.js"></script>
 
 		
 	</body>
