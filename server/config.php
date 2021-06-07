@@ -25,8 +25,8 @@ $path = getcwd();
 if (strpos($path, "_rctracker") === false) {
 	
 	define('DB_HOST', 'localhost');
-	define('DB_USER', 'root');
-	define('DB_PASS', '');
+	define('DB_USER', 'rctracker');
+	define('DB_PASS', '24School');
 	define('DB_NAME', 'rctracker');
 	define('DB_CHARSET', 'UTF-8');
 
