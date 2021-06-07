@@ -17,8 +17,25 @@
     /*
      * Access DB data config
      */
-    const DB_HOST = 'localhost'; // Your Database Host
+
+$path = getcwd();
+
+
+// PRODUCTION
+if (strpos($path, "_rctracker") === false) {
+	const DB_HOST = 'localhost'; // Your Database Host
+    const DB_USER = 'root'; // Your Database User Name
+    const DB_PASS = ''; // Your Database Password
+    const DB_NAME = 'rctracker'; // Your Database Name
+    const DB_CHARSET = 'UTF-8'; // Your Database Charset
+}
+
+// LOCAL
+else {
+	const DB_HOST = 'localhost'; // Your Database Host
     const DB_USER = 'root'; // Your Database User Name
     const DB_PASS = 'root'; // Your Database Password
     const DB_NAME = 'rctracker'; // Your Database Name
     const DB_CHARSET = 'UTF-8'; // Your Database Charset
+}
+    
