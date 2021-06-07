@@ -23,11 +23,15 @@ $path = getcwd();
 
 // PRODUCTION
 if (strpos($path, "_rctracker") === false) {
+	
 	define('DB_HOST', 'localhost');
 	define('DB_USER', 'root');
 	define('DB_PASS', '');
 	define('DB_NAME', 'rctracker');
 	define('DB_CHARSET', 'UTF-8');
+
+
+	define("APP_URL", "http://143.198.166.174/");
 
 }
 
@@ -38,5 +42,8 @@ else {
 	define('DB_PASS', 'root');
 	define('DB_NAME', 'rctracker');
 	define('DB_CHARSET', 'UTF-8');
+
+
+	define("APP_URL", "http://localhost/_rctracker");
 }
     

@@ -5,7 +5,6 @@ error_reporting(E_ALL);
 
 
 
-	define("APP_URL", "http://localhost/_rctracker");
 
 
 	include("php_crud.php");
