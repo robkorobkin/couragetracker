@@ -23,19 +23,20 @@ $path = getcwd();
 
 // PRODUCTION
 if (strpos($path, "_rctracker") === false) {
-	const DB_HOST = 'localhost'; // Your Database Host
-    const DB_USER = 'root'; // Your Database User Name
-    const DB_PASS = ''; // Your Database Password
-    const DB_NAME = 'rctracker'; // Your Database Name
-    const DB_CHARSET = 'UTF-8'; // Your Database Charset
+	define('DB_HOST', 'localhost');
+	define('DB_USER', 'root');
+	define('DB_PASS', '');
+	define('DB_NAME', 'rctracker');
+	define('DB_CHARSET', 'UTF-8');
+
 }
 
 // LOCAL
 else {
-	const DB_HOST = 'localhost'; // Your Database Host
-    const DB_USER = 'root'; // Your Database User Name
-    const DB_PASS = 'root'; // Your Database Password
-    const DB_NAME = 'rctracker'; // Your Database Name
-    const DB_CHARSET = 'UTF-8'; // Your Database Charset
+	define('DB_HOST', 'localhost');
+	define('DB_USER', 'root');
+	define('DB_PASS', 'root');
+	define('DB_NAME', 'rctracker');
+	define('DB_CHARSET', 'UTF-8');
 }
     
