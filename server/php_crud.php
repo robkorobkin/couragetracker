@@ -50,6 +50,9 @@ class Database{
      * Database Connect
      */
 	public function connect(){
+
+        echo $this->db_host . ' ' . $this->db_user . ' ' . $this->db_pass . ' ' . $this->db_name;
+
         if(!$this->connection){
             $this->conn = new mysqli($this->db_host,$this->db_user,$this->db_pass,$this->db_name);
             if($this->conn->connect_errno > 0){
