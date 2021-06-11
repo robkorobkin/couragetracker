@@ -283,7 +283,26 @@ label.error {
 }
 
 
+.questionByQuestionHeader { font-size: 18px; }
+
+.indicatorCircle {
+	height: 20px; width: 20px; border-radius: 10px; background: black;
+	float: left; margin-right: 5px; margin-bottom: 5px;
+	border: solid 1px #ccc;
+}
+
+.status_1	{ background: red; }		/* 1 : "Strongly Disagree"  */
+.status_2	{ background: #015211; } 	/* 2 : "Disagree" */
+.status_3	{ background: #02bd26; } 	/* 3 : "Sometimes Agree" */
+.status_4	{ background: #8cfa99; } 	/* 4 : "Agree" */
+.status_5	{ background: #d9fcdd; } 	/* 5 : "Strongly Agree" */
 
 
+#resident_survey_questions tr.question td		{ padding: 20px 0; }
+.question .row 	{ padding: 5px 30px; font-weight: normal; }
+#resident_survey_questions .trigger { cursor: pointer; }
 
+
+.legend { padding: 15px 40px; }
+.legend .row { padding-bottom: 10px; }
 

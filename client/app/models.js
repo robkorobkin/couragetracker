@@ -279,9 +279,7 @@ class Exam {
 			this.date_taken_label = formatDateForOutput(exam.date_taken)
 			
 		}
-
 	}
-
 
 	// answers array is loaded either with DOM or SQL, build the rest of the object
 	processExamResults() {
@@ -296,10 +294,7 @@ class Exam {
 		}
 
 		this.avgScore = Math.round((this.totalScore / this.questionsAnswered) * 100) / 100;
-
-
 	}
-
 
 	generateRandomResults(){
 		this.answers = [];
@@ -308,8 +303,6 @@ class Exam {
 			this.answers.push(random_score);
 		}
 	}
-
-
 
 	submitExamToServer (callbackFunction){
 
@@ -332,18 +325,23 @@ class Exam {
 	}
 }
 
+
+
 class ExamList extends BaseList {
 
 	constructor(){
 		super();
 		this.mainList = [];
 		this.examLabels = [];
+		this.examTemplate = recovery_capital_assessmentJSON; // defined in data.js
 
 
 		this.lastExam = 0;
 		this.lastExam_display = '---';
 		this.lastScore = 0;
 		this.examCount = 0;
+
+		this.questionList = [];
 
 
 
@@ -409,6 +407,31 @@ class ExamList extends BaseList {
 			exam.date_taken_label = l;
 			this.examLabels.push(l);
 		}
+
+
+
+
+		// BUILD QUESTION LIST
+		for(let q of this.examTemplate.questions){
+			this.questionList.push({
+				q : q,
+				a : []
+			});
+		}
+
+		for(let exam of this.mainList){
+			for(let qIndex = 0; qIndex < exam.answers.length; qIndex++){
+				let score = exam.answers[qIndex];
+				this.questionList[qIndex].a.push({
+					s : score,
+					d : exam.date_taken
+				});
+			}
+		}
+
+		console.log(this.questionList);
+
+			
 	}
 
 	getExamByLabel(label){

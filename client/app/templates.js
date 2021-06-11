@@ -137,6 +137,8 @@ TemplateLoader = {
 	},
 
 
+
+
 	writeResidentEditorMainHTML : function (selected_resident){
 
 		let html = 	'';
@@ -252,7 +254,7 @@ TemplateLoader = {
 				html += '<tr class="question" id="question_' + qIndex + '">' + 
 							'<td>' + btnHtml + '</td>' +
 							'<td>' + question + '</td>' +
-						'</div>';
+						'</tr>';
 			});
 
 		html += '</table>' +
@@ -289,9 +291,7 @@ TemplateLoader = {
 					'</div>';
 
 		return html;
-
 	},
-
 
 	_writeExamListTableHTML : function(examList){
 		var html = '';
@@ -312,6 +312,66 @@ TemplateLoader = {
 		return html;
 	},
 
+	writeQbyQHTML : function(examList, examTemplate){
+		console.log(examList);
+		let html = 	'<div class="questionByQuestionHeader">QUESTION BY QUESTION</div>' +
+
+					'<div class="legend">' + 
+						'<div class="row">' + 
+							'<div class="indicatorCircle status_5"></div> Strongly Agree' +
+						'</div>' +
+						'<div class="row">' + 
+							'<div class="indicatorCircle status_4"></div> Agree' +
+						'</div>' +	
+						'<div class="row">' + 
+							'<div class="indicatorCircle status_3"></div> Sometimes Agree' +
+						'</div>' +
+						'<div class="row">' + 
+							'<div class="indicatorCircle status_2"></div> Disagree' +
+						'</div>' +
+						'<div class="row">' + 
+							'<div class="indicatorCircle status_1"></div> Strongly Disagree ' + 
+						'</div>' +
+					'</div>' +
+
+					'<table id="resident_survey_questions">';
+					
+		for(let qIndex = 0; qIndex < examList.questionList.length; qIndex++){
+
+			let question = examList.questionList[qIndex];
+
+			let indicatorHTML = '';
+			for(let a of question.a){
+				indicatorHTML += '<div class="indicatorCircle status_' + a.s + '"></div>';
+
+			}
+
+			// 
+
+			html += '<tr class="question" id="question_' + qIndex + '">' + 
+						'<td style="vertical-align: top">' + indicatorHTML + '</td>' +
+						'<td>' + 
+							'<div class="trigger" id="trigger_' + qIndex + '">' + escapeForHtml(question.q) + '</div>' +
+							'<div class="details" id="details_' + qIndex + '" style="display: none">';
+
+			for(let a of question.a){
+					html +=		'<div class="row">' +
+									formatDateForOutput(a.d) + ' - ' + examTemplate.options[a.s] +
+								'</div>';
+			}
+
+
+			html +=			'</div>' +
+						'</td>' +
+					'</tr>';
+		}
+
+		html += '</table>';
+
+		return html;
+
+
+	},
 
 
 	/********************************************
@@ -338,7 +398,6 @@ TemplateLoader = {
 					'</div>';
 
 		return html;
-
 	},
 
 	_writeUserListTableHTML : function(userList){

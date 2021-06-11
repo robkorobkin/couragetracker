@@ -21,7 +21,7 @@
 $path = getcwd();
 
 
-// PRODUCTION
+// PRODUCTION - 143.198.166.174
 if (strpos($path, "_rctracker") === false) {
 	
 	define('DB_HOST', 'localhost');

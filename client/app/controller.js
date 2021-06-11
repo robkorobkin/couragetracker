@@ -101,9 +101,7 @@ ViewController = {
 			ViewModel.examList.loadFromResidentList(ViewModel.residentList);
 			callbackFunction();
 		});
-
 	},
-
 
 	openResident : function(residentId) {
 
@@ -118,7 +116,6 @@ ViewController = {
 			ViewModel.selected_resident = resident;
 			ViewController.loadView('ResidentDash');
 		});
-	
 	},
 
 	reloadResident : function(updatedResident){
@@ -133,9 +130,6 @@ ViewController = {
 		}
 		else ViewController.loadView('ResidentDash');
 	},
-
-
-
 
 	loadResidentListView : function(){
 
@@ -176,11 +170,8 @@ ViewController = {
 				ViewModel.residentList.sorting_by = "created";
 				ViewModel.residentList.sort_by("created")				
 			}
-``
 			ViewController._loadResidentListTable();
 		})
-
-		
 	},
 
 	_loadResidentListTable : function(){
@@ -231,7 +222,6 @@ ViewController = {
 				ViewModel.selected_exam.delete(ViewController.reloadResident)
 			}
 		})
-
 	},
 
 
@@ -260,10 +250,23 @@ ViewController = {
 		// MAIN BODY + LOAD
 		let main_html = TemplateLoader.writeResidentDashMainHTML(selected_resident) +
 						'<br /><br /><br />' + 
-						TemplateLoader.writeExamListMainHTML();
+						TemplateLoader.writeExamListMainHTML() + // just presents table architecture
+						'<br /><br /><br />' + 
+						TemplateLoader.writeQbyQHTML(selected_resident.examList, ViewModel.examTemplate); // Question by Question
+
 
 
 		this.setMainBody(main_html);
+
+
+		let numOfTestsTaken = selected_resident.examList.mainList.length;
+		$('#resident_survey_questions td:first-child').css('width', (numOfTestsTaken * 30) + 'px');
+
+		$('.trigger').click(function(){
+			let qIndex = this.id.split('_')[1];
+			$('#details_' + qIndex).toggle()
+		})
+
 
 		this.handleResidentSubNav('dash');
 
@@ -272,7 +275,7 @@ ViewController = {
 		
 
 		// LOAD CHART
-		if(ViewModel.examList.length == 0){
+		if(ViewModel.examList.mainList.length != 0){
 			ChartController.loadChart("Resident", selected_resident);
 			ChartController.openByLabel = function(label){
 				let exam = ViewModel.selected_resident.examList.getExamByLabel(label);
