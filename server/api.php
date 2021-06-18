@@ -2,15 +2,26 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+date_default_timezone_set('America/New_York');
 
 
 
+	// LOAD MODELS
+	require_once('config.php');
+
+	require_once("php_crud.php");
+	require_once("model_rctracker.php");
+	require_once("model_user.php");
+	require_once("model_sendgrid.php");
 
 
-	include("php_crud.php");
-	include("rctrackerModels.php");
-	include("userModels.php");
-	date_default_timezone_set('America/New_York');
+	// CREATE GLOBAL EMAIL CLIENT - MIGHT AS WELL DO IT HERE
+	global $sendgridClient;
+	$sendgrid_config = array(
+		'access_token' => SENDGRID_ACCESSTOKEN,
+		'from_email' => SENDGRID_FROMEMAIL
+	); 
+	$sendgridClient = new RKSendGrid($sendgrid_config);
 	
 
 

@@ -31,9 +31,7 @@ TemplateLoader = {
 					'</div>';
 
 		return html;
-
 	},
-
 
 
 	_writeResidentListTableHTML : function(residentList){
@@ -128,15 +126,13 @@ TemplateLoader = {
 					'<div class="chart-container" style="position: relative; height:450px; width:800px">' +
 						'<canvas id="myChart"></canvas>' +
 					'</div>' 
-					+ '<button id="postrandomexam_button" type="button" class="btn btn-raised btn-secondary">POST RANDOM EXAM</button>';
+					// + '<button id="postrandomexam_button" type="button" class="btn btn-raised btn-secondary">POST RANDOM EXAM</button>' +
+					// '<br /><br /><br />';
 
 		// SHOW THE TABLE OF RECENT EXAMS
 
 		return html;
-
 	},
-
-
 
 
 	writeResidentEditorMainHTML : function (selected_resident){
@@ -232,6 +228,9 @@ TemplateLoader = {
 							'<input type="text" class="form-control" id="exam_date_taken">' +
 						'</div>' +
 
+						'<div class="examlegend">KEY: Strongly Disagree - Disagree - Sometimes Agree - Agree - Strongly Agree</div>' +
+
+
 
 						'<table id="resident_survey_questions">';
 					
@@ -257,11 +256,14 @@ TemplateLoader = {
 						'</tr>';
 			});
 
-		html += '</table>' +
-				'<div id="btn_frame">' +
+		html += '</table>';
+
+		// SAVE BUTTON
+		html += '<div id="btn_frame">' +
 					'<button id="save_btn"  type="button" class="btn btn-raised btn-primary">SAVE</button>' +
-				'</div>' +
-			'</div>';
+				'</div>';
+
+		html += '</div>';
 
 		return html;
 	},
@@ -348,7 +350,7 @@ TemplateLoader = {
 
 			// 
 
-			html += '<tr class="question" id="question_' + qIndex + '">' + 
+			html += '<tr class="question questionReview" id="question_' + qIndex + '">' + 
 						'<td style="vertical-align: top">' + indicatorHTML + '</td>' +
 						'<td>' + 
 							'<div class="trigger" id="trigger_' + qIndex + '">' + escapeForHtml(question.q) + '</div>' +
@@ -369,8 +371,6 @@ TemplateLoader = {
 		html += '</table>';
 
 		return html;
-
-
 	},
 
 

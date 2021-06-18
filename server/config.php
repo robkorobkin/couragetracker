@@ -30,9 +30,10 @@ if (strpos($path, "_rctracker") === false) {
 	define('DB_NAME', 'rctracker');
 	define('DB_CHARSET', 'UTF-8');
 
-
 	define("APP_URL", "http://143.198.166.174/");
 
+	define("SENDGRID_ACCESSTOKEN", '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');
+	define("SENDGRID_FROMEMAIL", 'rob.korobkin@gmail.com');
 }
 
 // LOCAL
@@ -43,7 +44,10 @@ else {
 	define('DB_NAME', 'rctracker');
 	define('DB_CHARSET', 'UTF-8');
 
-
 	define("APP_URL", "http://localhost/_rctracker");
+
+	define("SENDGRID_ACCESSTOKEN", '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');
+	define("SENDGRID_FROMEMAIL", 'rob.korobkin@gmail.com');
+
 }
     

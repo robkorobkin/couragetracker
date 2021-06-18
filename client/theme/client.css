@@ -220,6 +220,14 @@ label.error {
 *	SURVEY STYLES
 /*******************************/
 
+.examlegend {
+	font-weight: bold;
+	padding: 0 0 30px;
+	font-size: 11px;
+	text-transform: uppercase;
+	color: #666;
+}
+
 #resident_survey_questions tr {
 	height: 50px;
 	font-size: 14px;
@@ -291,14 +299,22 @@ label.error {
 	border: solid 1px #ccc;
 }
 
-.status_1	{ background: red; }		/* 1 : "Strongly Disagree"  */
-.status_2	{ background: #015211; } 	/* 2 : "Disagree" */
-.status_3	{ background: #02bd26; } 	/* 3 : "Sometimes Agree" */
-.status_4	{ background: #8cfa99; } 	/* 4 : "Agree" */
-.status_5	{ background: #d9fcdd; } 	/* 5 : "Strongly Agree" */
 
 
-#resident_survey_questions tr.question td		{ padding: 20px 0; }
+/* .status_2	{ background: #015211; } 	/* 2 : "Disagree" */
+/* .status_3	{ background: #02bd26; } 	/* 3 : "Sometimes Agree" */
+/* .status_4	{ background: #8cfa99; } 	/* 4 : "Agree" */
+/* .status_5	{ background: #d9fcdd; } 	/* 5 : "Strongly Agree" */
+
+.status_1	{ background: #fc1100; }	/* 1 : "Strongly Disagree"  */
+.status_2	{ background: #f5655b; } 	/* 2 : "Disagree" */
+.status_3	{ background: #d6aeab; } 	/* 3 : "Sometimes Agree" */
+.status_4	{ background: #fccdca; } 	/* 4 : "Agree" */
+.status_5	{ background: white; } 		/* 5 : "Strongly Agree" */
+
+
+
+#resident_survey_questions tr.questionReview td		{ padding: 20px 0; }
 .question .row 	{ padding: 5px 30px; font-weight: normal; }
 #resident_survey_questions .trigger { cursor: pointer; }
 

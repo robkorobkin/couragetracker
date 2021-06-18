@@ -98,17 +98,19 @@
 		}
 
 
-		function _sendConfirmationEmail($newUser) {
 
+
+		/**********************************
+		*	SEND EMAILS
+		**********************************/
+
+
+		function _sendConfirmationEmail($newUser) {
+			global $sendgridClient;
 
 			$confirm_email_url = APP_URL . "/index.php?v=confirm_email&access_token=" . $newUser['access_token'];
-			
-			$to = $newUser['email'];
-
-			$subject = 'Welcome to RC Tracker!';
-
-
-			// // ONLY WAY NOT TO HAVE WEIRD INDENTS IN EMAIL
+		
+// // ONLY WAY NOT TO HAVE WEIRD INDENTS IN EMAIL
 $body = 
 
 "Hi " . $newUser['first_name'] . ",
@@ -125,22 +127,28 @@ Thanks so much!
 Rob Korobkin
 RC Tracker - Lead Developer";
 
-			mail($to, $subject, $body);
-	
+
+			$email_parameters = array(
+				'recipient' => $newUser['email'],
+				'subject' => 'Welcome to RC Tracker!',
+				'body' => $body
+			);
+
+			if(!$sendgridClient -> loadAndSendEmail($email_parameters)){
+				$error_message = $sendgridClient -> error_message;
+				exit($error_message);
+			}
+
 		}
 
 
 		function _sendReminderEmail($user) {
+			global $sendgridClient;
 
 			// SEND EMAIL - ToDo: THIS NEEDS WORK
 			$resetpassword_url = APP_URL . "/index.php?v=reset_pw&access_token=" . $user['access_token'];
 
-			$to = $user['email'];
-
-			$subject = 'Click to reset your password!';
-
-
-			// // ONLY WAY NOT TO HAVE WEIRD INDENTS IN EMAIL
+// // ONLY WAY NOT TO HAVE WEIRD INDENTS IN EMAIL
 $body = 
 
 "Hi " . $user['first_name'] . ",
@@ -153,7 +161,17 @@ Thanks so much!
 Rob Korobkin
 RC Tracker - Lead Developer";
 
-			mail($to, $subject, $body);
+
+			$email_parameters = array(
+				'recipient' => $user['email'],
+				'subject' => 'Click to reset your password!',
+				'body' => $body
+			);
+
+			if(!$sendgridClient -> loadAndSendEmail($email_parameters)){
+				$error_message = $sendgridClient -> error_message;
+				exit($error_message);
+			}
 	
 		}
 

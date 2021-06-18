@@ -80,6 +80,8 @@ $(function(){
 			$('#confirmtext').show();
 		});
 	}
+
+
 	if(mode == "reset_pw"){
 
 		api.callApi('user_confirmaccesstoken', access_token, (response) => {
@@ -91,6 +93,8 @@ $(function(){
 			$('#reset_form').show();
 		});
 	}
+
+
 	if(mode == "pickhouse"){
 
 		api.callApi('user_fetchHouseList', access_token, (response) => {
@@ -284,7 +288,6 @@ SEND PASSWORD REMINDER
 				console.log('API is being weird.');
 			}
 			if(response.status == "error"){
-				console.log('trying to update error box')
 				$('#forgot_errorbox').html(escapeForScreen(response.message)).show();
 			}
 
@@ -497,19 +500,22 @@ api = {
 			initial_request : this.initial_request
 		}
 
-		let apiCallBack = function(response){
-			if('user' in response) {
-				ViewModel.user = response.user;
-				response = response.response;
-			}
-			callbackFunction(response);
-		}
+		// let apiCallBack = 
 
 		$.ajax({
+			
+			success: function(response){
+				if('user' in response) {
+					ViewModel.user = response.user;
+					response = response.response;
+				}
+				callbackFunction(response);
+			},
+
 			type: 'POST',
 			url: this.apiPath,
 			data: JSON.stringify(req),
-			success: apiCallBack,
+
 			contentType: "application/json",
 			dataType: 'json'
 		});

@@ -540,7 +540,7 @@ var ChartController = {
 
 	// TEMPLATE COLORS
 	template_colors : {
-		1 : "rgba( 59, 30, 141, .8)",
+		1 : "red", // "rgba( 59, 30, 141, .8)",
 		2 : "rgba( 30, 96, 141, .8)",
 		3 : "rgba( 30, 141, 116, .8)",
 		4 : "rgba( 55, 141, 30, .8)",

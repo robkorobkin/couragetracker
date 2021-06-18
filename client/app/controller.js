@@ -249,7 +249,6 @@ ViewController = {
 
 		// MAIN BODY + LOAD
 		let main_html = TemplateLoader.writeResidentDashMainHTML(selected_resident) +
-						'<br /><br /><br />' + 
 						TemplateLoader.writeExamListMainHTML() + // just presents table architecture
 						'<br /><br /><br />' + 
 						TemplateLoader.writeQbyQHTML(selected_resident.examList, ViewModel.examTemplate); // Question by Question

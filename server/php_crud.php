@@ -37,8 +37,6 @@ class Database{
      * Construct
      */
     public function __construct(){
-        require_once __DIR__.'/config.php';
-
         $this->db_host = DB_HOST;
         $this->db_user = DB_USER;
         $this->db_pass = DB_PASS;
