@@ -577,7 +577,7 @@ RC Tracker - Lead Developer";
 
 			// UPDATE USER OBJECT
 			$sql = "UPDATE users set current_house=" . $insert_id . ", updated=\"" . date('Y-m-d  h:i:s A') . "\", " .
-					"status='active' "
+					"status='active' " .
 					"WHERE userId=" . $this -> user["userId"];
 			$this -> db -> sql($sql);
 
