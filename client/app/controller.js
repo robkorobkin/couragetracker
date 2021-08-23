@@ -60,6 +60,7 @@ ViewController = {
 
 			// LOAD NEW VIEW
 			this['load' + viewName + 'View']();
+			window.scrollTo(0,0);
 
 		}
 		else {
@@ -119,6 +120,10 @@ ViewController = {
 	},
 
 	reloadResident : function(updatedResident){
+
+		ViewModel.examTemplate = recovery_capital_assessmentJSON;
+
+
 		let r = new Resident(updatedResident);
 		ViewModel.selected_resident = r
 		ViewModel.residentList.loadResident(r); 
@@ -195,12 +200,22 @@ ViewController = {
 
 		this.setMainBody(TemplateLoader.writeExamSummaryMainHTML(exam));
 
-		this.setLeftHeader('Questionnaire: ' + exam.resident.first_name + ' ' + exam.resident.last_name);	
+		this.setLeftHeader(
+			'Questionnaire: ' + exam.resident.first_name + ' ' + exam.resident.last_name
+		);	
 
 		$('#resident_clickback').click(() => { ViewController.openResident(ViewModel.selected_exam.resident.residentId )})
 
 		$('#submit_button').click(function(){
-			exam.submitExamToServer(ViewController.reloadResident);
+
+			// if it's an RCA score, submit like normal:
+			if(exam.examTemplate.version == 1){
+				exam.submitExamToServer(ViewController.reloadResident);	
+			}
+			else {
+				ViewModel.selected_resident.savePersonalScore(exam, ViewController.reloadResident);
+			}
+			
 		})
 
 		$('#back_button').click(function(){
@@ -230,7 +245,13 @@ ViewController = {
 	// SHARED SUBNAV
 	handleResidentSubNav : function(mode){
 		$('#dash_tab').click(() => ViewController.loadView("ResidentDash"));
-		$('#takenew_tab').click(() => ViewController.loadView("ResidentExam"));
+
+		$('#takenew_tab').click(() => {
+			ViewModel.examTemplate = recovery_capital_assessmentJSON;
+			ViewController.loadView("ResidentExam")
+		});
+		
+
 		$('#residentinfo_tab').click(() => ViewController.loadView("ResidentInfo"));
 		$('#' + mode + "_tab").addClass('active');
 
@@ -289,7 +310,7 @@ ViewController = {
 
 		// MAKE AN EXAM OBJECT AND POINT APP MODEL TO IT
 		$('#postrandomexam_button').click( ()=> {
-			var exam = new Exam();
+			var exam = new Exam(recovery_capital_assessmentJSON);
 			exam.resident = ViewModel.selected_resident;
 			exam.generateRandomResults();
 			exam.submitExamToServer((resident)=>{
@@ -370,6 +391,55 @@ ViewController = {
 				})
 			}
 		})
+
+
+
+
+
+
+
+		$('#aces_take').click(() => {
+			ViewModel.examTemplate = aces_assessmentJSON;
+			ViewController.loadView("ResidentExam");
+		})
+		$('#aces_view').click(() => {
+			ViewModel.selected_exam = ViewModel.selected_resident.acesExam;
+			ViewController.loadView("ExamSummary");
+		})
+		$('#aces_delete').click(() => {
+			if(confirm("Are you sure you want to remove this person's ACEs information?")){
+				ViewModel.selected_resident.acesScore = '';
+				ViewModel.selected_resident.save(ViewController.reloadResident);
+			}
+		})
+
+
+
+
+		$('#harm_take').click(() => {
+			ViewModel.examTemplate = harm_assessmentJSON;
+			ViewController.loadView("ResidentExam");
+		})
+		$('#harm_view').click(() => {
+			ViewModel.selected_exam = ViewModel.selected_resident.harmExam;
+			ViewController.loadView("ExamSummary");
+		})
+		$('#harm_delete').click(() => {
+			if(confirm("Are you sure you want to remove this person's Harm History?")){
+				ViewModel.selected_resident.harmScore = '';
+				ViewModel.selected_resident.save(ViewController.reloadResident);
+			}
+		})
+
+
+
+
+		$('#harm_button').click(() => {
+			ViewModel.examTemplate = harm_assessmentJSON;
+			ViewController.loadView("ResidentExam");
+		})
+
+
 	},
 
 
@@ -390,7 +460,7 @@ ViewController = {
 
 
 			// MAKE AN EXAM OBJECT AND POINT APP MODEL TO IT
-			var exam = new Exam();
+			var exam = new Exam(ViewModel.examTemplate);
 			exam.resident = ViewModel.selected_resident;
 			ViewModel.selected_exam = exam;
 
@@ -444,7 +514,7 @@ ViewController = {
 
 
 
-// EXAM LIST VIEW
+	// EXAM LIST VIEW
 
 
 	/********************************************
@@ -504,7 +574,7 @@ ViewController = {
 
 
 
-// ADMIN - USER LIST / FEATURE
+	// ADMIN - USER LIST / FEATURE
 
 	/********************************************
 	*	VIEW: USERS LIST
@@ -517,7 +587,10 @@ ViewController = {
 	loadUserListView : function(){
 
 		// LOAD THE HTML
-		this.setLeftHeader('RC Tracker - Users List');
+		this.setLeftHeader('RC Tracker - Users List' +
+							'<button type="button" class="btn btn-raised btn-success" style="float: right" ' +
+ 							' id="adduser_button"> Add User</button>');
+
 		this.setMainBody(TemplateLoader.writeUserListMainHTML());
 
 		$('#mainTable th').click((e)=>{
@@ -536,12 +609,16 @@ ViewController = {
 
 		let payload = {}; // if we want to send something?
 
-		api.callApi('user_getUserList', payload, function(userListJSON){
+		api.callApi('user_fetchUserList', payload, function(userListJSON){
 			ViewModel.userList.loadList(userListJSON);
 			ViewController._loadUserListTable();
-		})
-		
+		});
+
+		$('#adduser_button').click(function(){
+			ViewController.openUser(-1);
+		});
 	},
+
 
 	_loadUserListTable : function(){
 		
@@ -554,26 +631,93 @@ ViewController = {
 		})
 	},
 
-	openUser : function(uIndex){
-		ViewModel.selected_user = ViewModel.userList.mainList[uIndex]; 
-		ViewController.loadView('UserSummary');
+
+	openUser : function(userId){
+
+		if(userId == -1){
+			ViewModel.selected_user = new User();
+			ViewController.loadView('UserSummary');
+			return;
+		}
+		else {
+			console.log(userId)
+			api.callApi('user_fetchUserByUserId', userId, function(userJSON){
+				ViewModel.selected_user = new User(userJSON);
+				ViewModel.userList.mainList.unshift(ViewModel.selected_user);
+				ViewController.loadView('UserSummary');
+			})	
+		}
+
+		
 	},
+
 
 	loadUserSummaryView : function(){
 
 		let user = ViewModel.selected_user;
 
+		console.log(user)
+
 		// LOAD THE HTML
-		this.setLeftHeader(escapeForHtml(user.first_name) + ' ' + escapeForHtml(user.last_name));
+		let h = '';
+		if(!user.isNew) {
+			h = escapeForHtml(user.first_name) + ' ' + escapeForHtml(user.last_name);
+		}
+		else {
+			h = 'ADD NEW USER';
+		}
+
+		this.setLeftHeader(h);
 		this.setMainBody(TemplateLoader.writeUserMainHTML(user));
 
-		api.callApi('user_fetchUserByUserId', user.userId, function(userJSON){
-			ViewModel.selected_user = new User(userJSON);
-			// ViewController._loadUserInfoTable();
-		})
-		
+		if(!user.isNew){
+			console.log(user)
+			for(var field in user){
+				console.log(field)
+				if($('#user_' + field).length != 0) {
+					$('#user_' + field).val(user[field]);
+				}
+			}
+		}
+
+		// CANCEL BUTTON
+		$('#cancel_button').click(() => ViewController.loadUserListView())
+
+
+		// SAVE / ADD BUTTON
+		$('#save_button, #add_button').click(function(){
+
+			// READ DOM
+			var goAhead = true;
+			var selected_user = ViewModel.selected_user;
+
+			for(var field in selected_user){
+				if($('#user_' + field).length != 0) {
+					let v = $('#user_' + field).val()
+
+					// If there's no first name or last name, make the label red
+					if(v == '' && (field == "first_name" || field == "last_name" || field == "email" || field == "password")){
+						$('#label_' + field).addClass('error');
+						goAhead = false;
+					}
+
+					else {
+						selected_user[field] = v;	
+					}
+				}
+			}
+
+
+			// POST TO API AND UPDATE MODEL
+			if(goAhead){
+				selected_user.save(() => ViewController.loadUserListView());
+			}
+		});
+			
 	},
+
 }
+
 
 
 // Thank You Google! 

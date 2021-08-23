@@ -251,6 +251,21 @@ label.error {
 	padding-left: 20px;
 }
 
+.exam_2 .sub {
+	font-weight: normal; 
+}
+
+.exam_2 .question td {
+	padding-top: 10px;
+	padding-bottom: 15px;
+	line-height: 24px;
+}
+
+#resident_survey_questions.exam_2 td:first-child,
+#resident_survey_questions.exam_3 td:first-child {
+	width: 100px;
+}
+
 .radio {
 	float: left;
 	padding-right: 4px;
@@ -321,4 +336,22 @@ label.error {
 
 .legend { padding: 15px 40px; }
 .legend .row { padding-bottom: 10px; }
+
+
+
+/* ACES / HARM SCORE */
+.scoreCircle 		{ float: left; font-size: 22px; font-weight: bold; padding-right: 20px; padding-left: 10px; }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

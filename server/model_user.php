@@ -525,6 +525,7 @@ RC Tracker - Lead Developer";
 			if($this -> user['status'] != 'admin') return $this -> _handleError("You don't have admin access. Can't load.");
 
 			$user = $this -> _getFullUserByUserId($userId);
+			$user['password'] = '';
 			return $user;
 		}
 

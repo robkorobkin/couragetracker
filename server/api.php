@@ -74,17 +74,19 @@ date_default_timezone_set('America/New_York');
 	// INSTANTIATE MODEL (if it starts, user_... open user model) AND SEE IF IT SUPPORTS REQUESTED METHOD
 	if(explode("_", $method)[0] == "user"){
 		$model = $userModel;
+		$modelName = 'User Model';
 		$method = explode("_", $method)[1];
 	} 
 	else {
 		$model = new RCTrackerModel();
+		$modelName = 'RC Model';
 		$model -> user = $user;
 	}
 
 	if($method[0] == '_') exit("BAD METHOD - STOP TRYING TO HACK ME.");
 	
 	if(!method_exists ($model, $method)) {
-		echo $req -> endpoint . " does not support the method: " . $method;
+		echo $modelName . " does not support the method: " . $method;
 		exit();
 	}
 

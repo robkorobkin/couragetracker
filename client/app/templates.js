@@ -21,6 +21,8 @@ TemplateLoader = {
 							'<tr class="headerRow">' +
 								'<th id="control-first_name">Name</th>' +
 								'<th id="control-movein_date">Move In</th>' +
+								'<th id="control-acesScoreVal">ACE</th>' +
+								'<th id="control-harmScoreVal">HARM</th>' +
 								'<th id="control-examList.lastExam">Last Assessed</th>' +
 								'<th id="control-examList.examCount">Count</th>' +
 								'<th id="control-examList.lastScore">Last Score</th>' +
@@ -43,6 +45,8 @@ TemplateLoader = {
 				html += '<tr id="resident_' + parseInt(resident.residentId) + '">' +
 							'<td>' + escapeForHtml(resident.first_name) + ' ' + escapeForHtml(resident.last_name) + '</td>' + 
 							'<td>' + escapeForHtml(resident.movein_date_display) + '</td>' +
+							'<td>' + escapeForHtml(resident.acesScoreVal) + '</td>' +
+							'<td>' + escapeForHtml(resident.harmScoreVal) + '</td>' +
 							'<td>' + escapeForHtml(formatDateForOutput(resident.examList.lastExam)) + '</td>' +
 							'<td>' + escapeForHtml(resident.examList.examCount) + '</td>' +
 							'<td>' + escapeForHtml(resident.examList.lastScore) + '</td>' +
@@ -59,7 +63,7 @@ TemplateLoader = {
 
 
 		var html = 	'<div id="survey_summary">' +
-						'<b>Recovery Capital Assessment of:</b>' +
+						'<b>' + exam.examTemplate.title + ' of:</b>' +
 						'<br /><a id="resident_clickback" href="#">' + 
 							exam.resident.first_name + ' ' + exam.resident.last_name + 
 						'</a>' +
@@ -144,62 +148,110 @@ TemplateLoader = {
 		html +=	'<form id="resident_edit_frame">' +
 					 
 
-					 	// NAME INPUTS
-						'<div class="form-group">' +
-							'<label for="resident_first_name" id="label_first_name" class="bmd-label-floating">First Name</label>' +
-							'<input type="text" class="form-control" id="resident_first_name">' +
-						'</div>' +
-						'<div class="form-group">' +
-							'<label for="resident_last_name"  id="label_last_name" class="bmd-label-floating">Last Name</label>' +
-							'<input type="text" class="form-control" id="resident_last_name">' +
-						'</div>' +
+				 	// NAME INPUTS
+					'<div class="form-group">' +
+						'<label for="resident_first_name" id="label_first_name" class="bmd-label-floating">First Name</label>' +
+						'<input type="text" class="form-control" id="resident_first_name">' +
+					'</div>' +
+					'<div class="form-group">' +
+						'<label for="resident_last_name"  id="label_last_name" class="bmd-label-floating">Last Name</label>' +
+						'<input type="text" class="form-control" id="resident_last_name">' +
+					'</div>' +
 
 
-						// STATUS SELECT BOX
-						'<div class="form-group">' +
-							'<label for="resident_status" class="bmd-label-floating">Status</label>' +
-							'<select class="form-control" id="resident_status">' +
-								'<option>Current Resident</option>' +
-								'<option>Former Resident</option>' +
-							'</select>' +
-						'</div>' +
+					// STATUS SELECT BOX
+					'<div class="form-group">' +
+						'<label for="resident_status" class="bmd-label-floating">Status</label>' +
+						'<select class="form-control" id="resident_status">' +
+							'<option>Current Resident</option>' +
+							'<option>Former Resident</option>' +
+						'</select>' +
+					'</div>' +
+
+					
+					// DOB INPUT
+					'<div class="form-group">' +
+						'<label for="resident_dob" class="bmd-label-floating">Date of Birth</label>' +
+						'<input type="text" class="form-control" id="resident_dob">' +
+					'</div>' +
+ 
+ 					// PHONE / EMAIL INPUTS
+ 					'<div class="form-group">' +
+						'<label for="resident_email" class="bmd-label-floating">Email</label>' +
+						'<input type="email" class="form-control" id="resident_email">' +
+					'</div>' +
+
+					'<div class="form-group">' +
+						'<label for="resident_phone" class="bmd-label-floating">Phone</label>' +
+						'<input type="phone" class="form-control" id="resident_phone">' +
+					'</div>' +
+
+ 
+ 					// BUTTONS
+					'<div id="btnFrame">';
+						
+
+				if(selected_resident.isNew) {
+					html +=  
+						'<button id="add_button" type="button" class="btn btn-raised btn-primary">ADD</button>' + 
+						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>';
+				}
+
+				else {
+					html +=
+
+						// SAVE / CANCEL
+						'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
+						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
+
+
+
+
+						// TAKE ACES AND HARM SCORES
+						'<br /><br /><br /><br />';
+
+
+						// ACES SCORE
+						html += '<h5>ACEs Score:</h5>';
+						if(selected_resident.acesScore == ''){
+							html += '<button id="aces_take" type="button" class="btn btn-raised btn-primary">ADD ACES SCORE</button>';
+						}
+
+						else {
+							html += '<div class="scorebox">' +
+										'<div class="scoreCircle">' + selected_resident.acesScoreVal + '</div>' +
+										'<button id="aces_view" type="button" class="btn btn-raised btn-secondary">VIEW</button>' +
+										'<button id="aces_take" type="button" class="btn btn-raised btn-primary">REPLACE</button>' +
+										'<button id="aces_delete" type="button" class="btn btn-raised btn-danger">DELETE</button>' +
+									'</div>';
+						}
+						
+						// HARM SCORE
+						html += '<br /><br /><br /><h5>Harm Score:</h5>';
+						if(selected_resident.harmScore == ''){
+							html += '<button id="harm_take" type="button" class="btn btn-raised btn-primary">ADD HARM SCORE</button>';
+						}
+
+						else {
+							html += '<div class="scorebox">' +
+										'<div class="scoreCircle">' + 
+											selected_resident.harmScoreVal + 
+										'</div>' +
+										'<button id="harm_view" type="button" class="btn btn-raised btn-secondary">VIEW</button>' +
+										'<button id="harm_take" type="button" class="btn btn-raised btn-primary">REPLACE</button>' +
+										'<button id="harm_delete" type="button" class="btn btn-raised btn-danger">DELETE</button>' +
+									'</div>';
+						}
 
 						
-						// DOB INPUT
-						'<div class="form-group">' +
-							'<label for="resident_dob" class="bmd-label-floating">Date of Birth</label>' +
-							'<input type="text" class="form-control" id="resident_dob">' +
-						'</div>' +
-	 
-	 					// PHONE / EMAIL INPUTS
-	 					'<div class="form-group">' +
-							'<label for="resident_email" class="bmd-label-floating">Email</label>' +
-							'<input type="email" class="form-control" id="resident_email">' +
-						'</div>' +
 
-						'<div class="form-group">' +
-							'<label for="resident_phone" class="bmd-label-floating">Phone</label>' +
-							'<input type="phone" class="form-control" id="resident_phone">' +
-						'</div>' +
 
-	 
-	 					// BUTTONS
-						'<div id="btnFrame">';
-							
 
-					if(selected_resident.isNew) {
-						html +=  
-							'<button id="add_button" type="button" class="btn btn-raised btn-primary">ADD</button>' + 
-							'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>';
-					}
-
-					else {
+						// DELETE RESIDENT
 						html +=
-							'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
-							'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
-							'<br /><br /><br /><br /><h5>Delete Resident</h5><i>This cannot be undone.</i><br /><br />' +
-							'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>';
-					}
+						'<br /><br /><br /><br /><h5>Delete Resident</h5><i>This cannot be undone.</i><br /><br />' +
+						'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>';
+				}
 
 
 		html +=			'</div>' +
@@ -219,8 +271,15 @@ TemplateLoader = {
 
 	writeExamMainHTML : function(examTemplate){
 
+
+		let keyArr = [];
+		for(let kIndex in examTemplate.options) keyArr.push(examTemplate.options[kIndex]);
+		let keyStr = keyArr.join (' - ');
+
 		let html = 	this.writeResidentSubNavHTML() +
 					'<div id="resident_questionnaire_frame">' +
+
+						'<h3>' + examTemplate.title + '</h3>' +
 						
 						// DATE TAKEN 
 						'<div class="form-group">' +
@@ -228,11 +287,11 @@ TemplateLoader = {
 							'<input type="text" class="form-control" id="exam_date_taken">' +
 						'</div>' +
 
-						'<div class="examlegend">KEY: Strongly Disagree - Disagree - Sometimes Agree - Agree - Strongly Agree</div>' +
+						'<div class="examlegend">KEY: ' + keyStr + '</div>' +
 
 
 
-						'<table id="resident_survey_questions">';
+						'<table id="resident_survey_questions" class="exam_' + examTemplate.version + '">';
 					
 			$(examTemplate.questions).each(function(qIndex){
 				var question = examTemplate.questions[qIndex];
@@ -315,7 +374,6 @@ TemplateLoader = {
 	},
 
 	writeQbyQHTML : function(examList, examTemplate){
-		console.log(examList);
 		let html = 	'<div class="questionByQuestionHeader">QUESTION BY QUESTION</div>' +
 
 					'<div class="legend">' + 
@@ -375,24 +433,24 @@ TemplateLoader = {
 
 
 	/********************************************
-	*	VIEW: USER LIST
+	*	VIEW: house LIST
 	*
-	*	getUsersListHTML(residents) 		: returns HTML for view
-	*	_getUsersListTableHTML(residents) 	: takes users array, returns HTML for table sub-component
+	*	gethousesListHTML(residents) 		: returns HTML for view
+	*	_gethousesListTableHTML(residents) 	: takes houses array, returns HTML for table sub-component
 	********************************************/
 
-	writeUserListMainHTML : function(){
+	writehouseListMainHTML : function(){
 
-		let html = 	'<div id="usersList_view">' +
+		let html = 	'<div id="housesList_view">' +
 						'<table id="mainTable">' +
 							'<tr class="headerRow">' +
-								'<th id="control-userId">ID</th>' +
+								'<th id="control-houseId">ID</th>' +
 								'<th id="control-created">Created</th>' +
 								'<th id="control-first_name">Name</th>' +
 								'<th id="control-housename">House</th>' +
 								'<th id="control-status">Status</th>' +
 							'</tr>' +
-							'<tbody class="mainTable" id="usersTable">' +
+							'<tbody class="mainTable" id="housesTable">' +
 							'</tbody>' +
 						'</table>' +
 					'</div>';
@@ -400,46 +458,192 @@ TemplateLoader = {
 		return html;
 	},
 
-	_writeUserListTableHTML : function(userList){
+	_writehouseListTableHTML : function(houseList){
 		let html = '';
-		$(userList).each(function(index, user){
-			if(user.display){
-				html += '<tr id="user_' + index + '">' +
+		$(houseList).each(function(index, house){
+			if(house.display){
+				html += '<tr id="house_' + house.houseId + '">' +
 							'<td>' + 
-								parseInt(user.userId) + 
+								parseInt(house.houseId) + 
 							'</td>' + 
 							'<td id="field-name' + index + '">' + 
-								escapeForHtml(user.created_display) + 
+								escapeForHtml(house.created_display) + 
 							'</td>' + 
 							'<td>' + 
-								escapeForHtml(user.first_name) + ' ' + escapeForHtml(user.last_name) + 
+								escapeForHtml(house.first_name) + ' ' + escapeForHtml(house.last_name) + 
 							'</td>' +
-							'<td>' + escapeForHtml(user.housename) + '</td>' +
-							'<td>' + escapeForHtml(user.status) + '</td>' +
+							'<td>' + escapeForHtml(house.housename) + '</td>' +
+							'<td>' + escapeForHtml(house.status) + '</td>' +
 						'</tr>';
 			}
 		});
 		return html;
 	},
 
-	writeUserMainHTML : function(user){
+	writehouseMainHTML : function(house){
 
-		let html = 	'<div id="users_view">' +
+		let html = '';
 
-						'<br /><b>First Name: </b>' + user.first_name +
-						'<br /><b>Last Name: </b>' + user.last_name +
-						'<br /><b>Email: </b>' + user.email +
+		html +=	'<form id="house_edit_frame">' +
+					 
+
+				 	// NAME INPUTS
+				 	this.writeField('house_email', 'Email') +
+				 	this.writeField('house_first_name', 'First Name') +
+				 	this.writeField('house_last_name', 'Last Name') +
+				 	this.writeField('house_password', 'Password') +
+				 	this.writeField('house_password2', 'Password (repeat)');
+
+
+					// STATIC INFO
+					if(!house.isNew){
+						html += 	'<div class="info-panel">' +
+										'<b>house INFO:</b>' +
+										'<br />Status: ' + house.status + 
+										'<br />Created: ' + house.created + 
+										'<br />Updated: ' + house.updated + 
+									'<br /><br /><br /></div>';
+					}
+					
+ 
+ 					// BUTTONS
+					'<div id="btnFrame">';
 						
-						'<br /><br /><b>User ID: </b>' + user.userId +
-						'<br /><b>Created: </b>' + user.created +
-						'<br /><b>Updated: </b>' + user.updated +
-						'<br /><b>Status: </b>' + user.status +
 
-						'<br /><br /><b>House: </b>' + user.housename +
+				if(house.isNew) {
+					html +=  
+						'<button id="add_button" type="button" class="btn btn-raised btn-primary">ADD</button>' + 
+						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>';
+				}
+
+				else {
+					html +=
+						'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
+						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
+						'<br /><br /><br /><br /><h5>Delete house</h5><i>This cannot be undone.</i><br /><br />' +
+						'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>';
+				}
+
+
+		html +=			'</div>' +
+					'</form>';
+
+		return html;
+	},
+
+
+
+	/********************************************
+	*	VIEW: HOUSE LIST
+	*
+	*	getHouseListHTML() 				: returns HTML for view
+	*	_getHouseListTableHTML(houses) 	: takes houses array, returns HTML for table sub-component
+	********************************************/
+
+	writeHouseListMainHTML : function(){
+
+		let html = 	'<div id="housesList_view">' +
+						'<table id="mainTable">' +
+							'<tr class="headerRow">' +
+								'<th id="control-houseId">ID</th>' +
+								'<th id="control-housename">Name</th>' +
+							'</tr>' +
+							'<tbody class="mainTable" id="housesTable">' +
+							'</tbody>' +
+						'</table>' +
 					'</div>';
 
 		return html;
+	},
+
+	_writehouseListTableHTML : function(houseList){
+		let html = '';
+		$(houseList).each(function(index, house){
+			if(house.display){
+				html += '<tr id="house_' + parseInt(house.houseId) + '">' +
+							'<td>' + 
+								parseInt(house.houseId) + 
+							'</td>' + 
+							'<td id="field-name' + index + '">' + 
+								escapeForHtml(house.created_display) + 
+							'</td>' + 
+							'<td>' + 
+								escapeForHtml(house.first_name) + ' ' + escapeForHtml(house.last_name) + 
+							'</td>' +
+							'<td>' + escapeForHtml(house.housename) + '</td>' +
+							'<td>' + escapeForHtml(house.status) + '</td>' +
+						'</tr>';
+			}
+		});
+		return html;
+	},
+
+	writehouseMainHTML : function(house){
+
+		let html = '';
+
+		html +=	'<form id="house_edit_frame">' +
+					 
+
+				 	// NAME INPUTS
+				 	this.writeField('house_email', 'Email') +
+				 	this.writeField('house_first_name', 'First Name') +
+				 	this.writeField('house_last_name', 'Last Name') +
+				 	this.writeField('house_password', 'Password') +
+				 	this.writeField('house_password2', 'Password (repeat)');
+
+
+					// STATIC INFO
+					if(!house.isNew){
+						html += 	'<div class="info-panel">' +
+										'<b>house INFO:</b>' +
+										'<br />Status: ' + house.status + 
+										'<br />Created: ' + house.created + 
+										'<br />Updated: ' + house.updated + 
+									'<br /><br /><br /></div>';
+					}
+					
+ 
+ 					// BUTTONS
+					'<div id="btnFrame">';
+						
+
+				if(house.isNew) {
+					html +=  
+						'<button id="add_button" type="button" class="btn btn-raised btn-primary">ADD</button>' + 
+						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>';
+				}
+
+				else {
+					html +=
+						'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
+						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
+						'<br /><br /><br /><br /><h5>Delete house</h5><i>This cannot be undone.</i><br /><br />' +
+						'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>';
+				}
+
+
+		html +=			'</div>' +
+					'</form>';
+
+		return html;
+	},
+
+
+
+	writeField : function(fieldName, label){
+
+		let f = escapeForHtml(fieldName);
+
+		let html = '<div class="form-group">' +
+						'<label for="' + f + '" id="label_' + f + '" class="bmd-label-floating">' + escapeForHtml(label) +'</label>' +
+						'<input type="text" class="form-control" id="' + f + '">' +
+					'</div>';
+
+		return html;
+
 	}
+
 
 }
 

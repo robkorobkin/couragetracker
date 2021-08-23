@@ -18,7 +18,7 @@
 			//print_r($this -> user);
 			$newResident = array();
 			$newResident['houseId'] = $this -> user['current_house']['houseId'];
-			$fields = array("status", "first_name", "last_name", "phone", "email", "movein_date", "dob");
+			$fields = array("status", "first_name", "last_name", "phone", "email", "movein_date", "dob", "acesScore", "harmScore");
 			foreach($fields as $f){
 				if(!isset($payload -> $f)) exit("Payload does not include the field: " . $f);
 				$newResident[$f] = $this -> db -> escapeString($payload -> $f);
@@ -49,13 +49,14 @@
 
 
 			// BUILD NEW RESIDENT OBJECT
-			$fields = array("status", "first_name", "last_name", "phone", "email", "movein_date", "dob");
+			$fields = array("status", "first_name", "last_name", "phone", "email", "movein_date", "dob", "acesScore", "harmScore");
 			foreach($fields as $f){
 				if(!isset($payload -> $f)) exit("Payload does not include the field: " . $f);
 				$resident[$f] = $this -> db -> escapeString($payload -> $f);
 			}
 			$resident['updated'] = date('Y-m-d  h:i:s A');
-			
+
+
 	
 			// UPDATE IT
 			$this -> db -> update("residents", $resident, "residentId=" . $residentId);

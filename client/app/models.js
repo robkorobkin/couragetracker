@@ -93,6 +93,8 @@ class Resident {
 		this.display = true;
 		this.created = '';
 		this.updated = '';
+		this.acesScore = '';
+		this.harmScore = '';
 		this.lastExam = '---';
 
 
@@ -120,17 +122,36 @@ class Resident {
 
 			}
 
+
+			if(this.acesScore != ''){
+				let e = JSON.parse(this.acesScore);
+				e.answers = JSON.stringify(e.answers); // hack - normal exams store answer array in sql as string
+				this.acesExam = new Exam(aces_assessmentJSON, e);
+				this.acesExam.resident = this;
+				this.acesScoreVal = this.acesExam.totalScore;
+			}
+			else this.acesScoreVal = '';
+
+			if(this.harmScore != ''){
+				let e = JSON.parse(this.harmScore);
+				e.answers = JSON.stringify(e.answers); // hack - normal exams store answer array in sql as string
+				this.harmExam = new Exam(harm_assessmentJSON, e);
+				this.harmExam.resident = this;
+				this.harmScoreVal = this.harmExam.totalScore;
+			}
+			else this.harmScoreVal = '';
+
 		}
 
 		else this.isNew = true;
-
 	}
 
 
 	save(callbackFunction){
 
 		// copy these fields into request object
-		var fields = ["status", "first_name", "last_name", "phone", "email", "movein_date", "dob", "status"];
+		var fields = ["status", "first_name", "last_name", "phone", "email", "movein_date", "dob", "status",
+						"acesScore", "harmScore"];
 		var req = {}
 		for(var fIndex in fields){ 
 			var f = fields[fIndex];
@@ -150,8 +171,18 @@ class Resident {
 		api.callApi(method, req, function(response){
 			response.isNew = isNew;
 			callbackFunction(response);
-		});
+		});		
+	}
+
+	savePersonalScore(exam, callbackFunction){
+		let personalScore = {
+			date_taken  : exam.date_taken,
+			answers 	: exam.answers	
+		}
+		if(exam.examTemplate.version == 2) this.acesScore = JSON.stringify(personalScore);
+		if(exam.examTemplate.version == 3) this.harmScore = JSON.stringify(personalScore);
 		
+		this.save(callbackFunction);
 	}
 }
 
@@ -240,9 +271,9 @@ class ExamTemplate {
 
 class Exam {
 
-	constructor (exam){
+	constructor (examTemplate, exam){
 
-		this.examTemplate = recovery_capital_assessmentJSON; // defined in data.js
+		this.examTemplate = examTemplate; 
 
 		this.isNew = true;
 
@@ -260,13 +291,17 @@ class Exam {
 
 		this.display = true;
 
-		this.groupedAnswers = { 1 : [], 2 : [], 3 : [], 4 : [], 5 : [] };
+
+		this.groupedAnswers = {};
+		for(let o in this.examTemplate.options) this.groupedAnswers[o] = [];
+
 
 		for(var q of this.examTemplate.questions) this.answers.push(0);
 
 		
 	
 		if(exam){
+
 			this.isNew = false;
 			var fields = ["examId","residentId","houseId","version","created","updated", "date_taken"];
 			for(var f of fields) {
@@ -274,6 +309,7 @@ class Exam {
 					this[f] = exam[f];	
 				}
 			}
+
 			this.answers = JSON.parse(exam.answers);
 			this.processExamResults();
 			this.date_taken_label = formatDateForOutput(exam.date_taken)
@@ -385,7 +421,7 @@ class ExamList extends BaseList {
 	loadForResident(residentExamJSON, resident){
 
 		for(var exam of residentExamJSON){
-			let e = new Exam(exam);
+			let e = new Exam(recovery_capital_assessmentJSON, exam);
 			e.resident = resident;
 			this.mainList.push(e);
 		}
@@ -429,7 +465,7 @@ class ExamList extends BaseList {
 			}
 		}
 
-		console.log(this.questionList);
+	//	console.log(this.questionList);
 
 			
 	}
@@ -445,18 +481,45 @@ class User {
 
 	constructor(uJSON){
 
+		this.fields = ['userId', 'email', 'first_name', 'last_name', 'password', 'created', 'updated', 'status', 'current_house', 'housename' ];
+
+		for(let f of this.fields) this[f] = '';
+		this.isNew = true;
+		this.display = true;
+
+
 		if(uJSON){
-			var fields = ['userId', 'email', 'first_name', 'last_name', 'created', 'updated', 'status', 'current_house', 'housename' ];
-			for(var f of fields) {
+			for(let f of this.fields) {
 				if(f in uJSON){
 					this[f] = uJSON[f];	
 				}
-				else this[f] = '';
-			}	
-			this.display = true;
+			}
+			this.isNew = false;
 			this.created_display = formatDateForOutput(this.created.split(' ')[0]);
 			if(!this.housename) this.housename = '---';
 		}
+	}
+
+	// copy these fields into request object
+	save(){
+		let req = {}
+		for(let f of this.fields){ 
+			req[f] = this[f];
+		}
+
+
+		if(this.isNew){
+			var method = "user_createUser" ;
+		}
+		else {
+			var method = "user_updateUser";
+			req.userId = parseInt(this.userId);
+		}
+		
+		api.callApi(method, req, function(response){
+			response.isNew = isNew;
+			callbackFunction(response);
+		});
 	}
 }
 
