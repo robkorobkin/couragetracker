@@ -78,7 +78,7 @@
 
 
 			// BUILD NEW RESIDENT OBJECT
-			$sql = "DELETE FROM RESIDENTS WHERE ResidentId=" . $residentId;
+			$sql = "DELETE FROM residents WHERE residentId=" . $residentId;
 			$this->db->sql($sql);
 	
 			
