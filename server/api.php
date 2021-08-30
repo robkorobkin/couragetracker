@@ -64,6 +64,8 @@ date_default_timezone_set('America/New_York');
 			echo json_encode(array("status" => "error", "message" => "Bad access token."), JSON_PRETTY_PRINT);
 			exit();
 		}
+
+		$userModel -> active_user = $user;
 	}
 	
 

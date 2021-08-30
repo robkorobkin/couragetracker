@@ -69,6 +69,21 @@ $(function(){
 	});
 	
 
+
+	// Hit ENTER in password box
+	$('#login_password').keyup((e) => {
+
+		// recommended to use e.key, it's normalized across devices and languages
+		let code = e.key; 
+	
+	    if(code==="Enter") {
+	    	e.preventDefault();
+	    	loginUser();
+	    }
+	})
+
+
+
 	// HANDLE ONLOAD EVENTS
 	if(mode == "confirm_email"){
 

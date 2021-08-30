@@ -344,8 +344,8 @@ label.error {
 
 
 
-
-
+#mainTable .userrow_deactivated td { color: #ccc; font-style: italic; }
+#error_message { color: red; font-style: italic; padding-bottom: 15px }
 
 
 

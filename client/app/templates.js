@@ -433,24 +433,37 @@ TemplateLoader = {
 
 
 	/********************************************
-	*	VIEW: house LIST
+	*	VIEW: USER LIST
 	*
-	*	gethousesListHTML(residents) 		: returns HTML for view
-	*	_gethousesListTableHTML(residents) 	: takes houses array, returns HTML for table sub-component
+	*	getusersListHTML(userss) 		: returns HTML for view
+	*	_getuserssListTableHTML(users) 	: takes houses array, returns HTML for table sub-component
+
+	// "userId": "4",
+	// "email": "rob.korobkin@gmail.com",
+	// "first_name": "Rob",
+	// "last_name": "Korobkin",
+	// "created": "2021-06-18  02:20:02 PM",
+	// "updated": "2021-06-18  02:20:50 PM",
+	// "status": "admin",
+	// "current_house": "4",
+	// "housename": "Courage House"
+
 	********************************************/
 
-	writehouseListMainHTML : function(){
+	writeUserListMainHTML : function(){
 
-		let html = 	'<div id="housesList_view">' +
+		let html = 	'<div id="usersList_view">' +
 						'<table id="mainTable">' +
 							'<tr class="headerRow">' +
-								'<th id="control-houseId">ID</th>' +
+								'<th id="control-userId">ID</th>' +
+								'<th id="control-first_name">First Name</th>' +
+								'<th id="control-last_name">Last Name</th>' +
+								'<th id="control-email">Email</th>' +
 								'<th id="control-created">Created</th>' +
-								'<th id="control-first_name">Name</th>' +
 								'<th id="control-housename">House</th>' +
 								'<th id="control-status">Status</th>' +
 							'</tr>' +
-							'<tbody class="mainTable" id="housesTable">' +
+							'<tbody class="mainTable" id="usersTable">' +
 							'</tbody>' +
 						'</table>' +
 					'</div>';
@@ -458,79 +471,142 @@ TemplateLoader = {
 		return html;
 	},
 
-	_writehouseListTableHTML : function(houseList){
+
+	_writeUserListTableHTML : function(userList){
+
 		let html = '';
-		$(houseList).each(function(index, house){
-			if(house.display){
-				html += '<tr id="house_' + house.houseId + '">' +
+		$(userList).each(function(index, user){
+
+
+			if(user.display){
+				html += '<tr id="user_' + parseInt(user.userId) + '" class="userrow_' + escapeForHtml(user.status) + '">' +
 							'<td>' + 
-								parseInt(house.houseId) + 
-							'</td>' + 
-							'<td id="field-name' + index + '">' + 
-								escapeForHtml(house.created_display) + 
+								parseInt(user.userId) + 
 							'</td>' + 
 							'<td>' + 
-								escapeForHtml(house.first_name) + ' ' + escapeForHtml(house.last_name) + 
+								escapeForHtml(user.first_name) + 
+							'</td>' + 
+							'<td>' + 
+								escapeForHtml(user.last_name) + 
 							'</td>' +
-							'<td>' + escapeForHtml(house.housename) + '</td>' +
-							'<td>' + escapeForHtml(house.status) + '</td>' +
+							'<td>' + 
+								escapeForHtml(user.email) + 
+							'</td>' + 
+							'<td>' + 
+								// convert "2021-06-18  02:20:02 PM" to "June 18, 2021"
+								escapeForHtml(formatDateForOutput(user.created.split(' ')[0])) + 
+							'</td>' +
+							'<td>' + escapeForHtml(user.housename) + 
+							'</td>' +
+							'<td>' +
+								escapeForHtml(user.status) + 
+							'</td>'
 						'</tr>';
+
+
 			}
 		});
 		return html;
 	},
 
-	writehouseMainHTML : function(house){
+	writeUserMainHTML : function(user, houseList){
 
 		let html = '';
 
 		html +=	'<form id="house_edit_frame">' +
 					 
 
-				 	// NAME INPUTS
-				 	this.writeField('house_email', 'Email') +
-				 	this.writeField('house_first_name', 'First Name') +
-				 	this.writeField('house_last_name', 'Last Name') +
-				 	this.writeField('house_password', 'Password') +
-				 	this.writeField('house_password2', 'Password (repeat)');
+		 	// NAME INPUTS
+		 	this.writeField('user_email', 'Email') +
+		 	this.writeField('user_first_name', 'First Name') +
+		 	this.writeField('user_last_name', 'Last Name') +
+		 	this.writeField('user_password', 'Password') +
+		 	this.writeField('user_password2', 'Password (repeat)');
 
 
-					// STATIC INFO
-					if(!house.isNew){
-						html += 	'<div class="info-panel">' +
-										'<b>house INFO:</b>' +
-										'<br />Status: ' + house.status + 
-										'<br />Created: ' + house.created + 
-										'<br />Updated: ' + house.updated + 
-									'<br /><br /><br /></div>';
-					}
-					
- 
- 					// BUTTONS
-					'<div id="btnFrame">';
-						
+		html +=	
+			'<div class="form-group">' +
+				'<label class="bmd-label-floating" for="user_status">Status</label>' +
+				'<select id="user_status" class="form-control">' +
+					'<option value="raw">Raw</option>' +
+					'<option value="confirmed">Confirmed</option>' +
+					'<option value="active">Active</option>' +
+					'<option value="admin">Admin</option>' +
+					'<option value="deactivated">Deactivated</option>' +
+				'</select>' +
+			'</div>' +
+			'<div id="error_message"></div>';
 
-				if(house.isNew) {
-					html +=  
+
+		 	if(user.isNew) {
+				html +=  
+					'<div id="btnFrame">' +
 						'<button id="add_button" type="button" class="btn btn-raised btn-primary">ADD</button>' + 
-						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>';
-				}
-
-				else {
-					html +=
-						'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
 						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
-						'<br /><br /><br /><br /><h5>Delete house</h5><i>This cannot be undone.</i><br /><br />' +
-						'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>';
+					'</div>' +
+				'</form>';
+				return html;
+			}
+
+
+			// STATIC INFO
+		
+		 	// ADD STATUS DROP DOWN
+
+
+		html +=
+			'<div id="btnFrame">' +
+				'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
+				'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
+				'<button id="deactivate_button" type="button" class="btn btn-raised btn-danger">DEACTIVATE</button>' +
+			'</div>' +
+
+			
+			'<br /><br /><br /><div class="info-panel">' +
+				'<b>USER INFO:</b>' +
+				'<br />Status: ' + user.status + 
+				'<br />Created: ' + user.created + 
+				'<br />Updated: ' + user.updated + 
+			'</div>' +
+
+
+			'<br /><br /><br />' +
+
+			'<div class="info-panel">' +
+				'<b>HOUSES:</b>';
+
+				for(let house of user.houses){
+					html += '<br />' + house.housename + 
+						' - <a id="removeacess_' + house.houseId + '" class="remove_link">Remove Access</a>';
 				}
 
+		html +=
+			'</div>' +
 
-		html +=			'</div>' +
-					'</form>';
+			'<br /><br /><br />' +
+
+			'<div class="info-panel">' +
+				'<b>ADD HOUSE:</b><br /><br />' +
+				'<div class="form-group">' +
+					'<label class="bmd-label-floating" for="addhouse_selector">Add House</label>' +
+					'<select id="addhouse_selector" class="form-control">';
+
+						for(let house of houseList.mainList){
+							html += '<option value="' + house.houseId + '">' + house.housename + '</option>';
+						}
+
+		html +=		'</select>' +
+				'</div>' +
+				'<button id="addhouse_button" type="button" class="btn btn-raised btn-primary">GRANT ACCESS</button>' +
+			'</div>';
+
 
 		return html;
 	},
 
+
+	
+	
 
 
 	/********************************************
@@ -538,6 +614,17 @@ TemplateLoader = {
 	*
 	*	getHouseListHTML() 				: returns HTML for view
 	*	_getHouseListTableHTML(houses) 	: takes houses array, returns HTML for table sub-component
+	* 	
+		FIELDS:
+			houseId
+			housename
+			street
+			city
+			state
+			zip
+			created
+			updated
+
 	********************************************/
 
 	writeHouseListMainHTML : function(){
@@ -556,7 +643,7 @@ TemplateLoader = {
 		return html;
 	},
 
-	_writehouseListTableHTML : function(houseList){
+	_writeHouseListTableHTML : function(houseList){
 		let html = '';
 		$(houseList).each(function(index, house){
 			if(house.display){
@@ -564,21 +651,14 @@ TemplateLoader = {
 							'<td>' + 
 								parseInt(house.houseId) + 
 							'</td>' + 
-							'<td id="field-name' + index + '">' + 
-								escapeForHtml(house.created_display) + 
-							'</td>' + 
-							'<td>' + 
-								escapeForHtml(house.first_name) + ' ' + escapeForHtml(house.last_name) + 
-							'</td>' +
 							'<td>' + escapeForHtml(house.housename) + '</td>' +
-							'<td>' + escapeForHtml(house.status) + '</td>' +
 						'</tr>';
 			}
 		});
 		return html;
 	},
 
-	writehouseMainHTML : function(house){
+	writeHouseMainHTML : function(house, userList){
 
 		let html = '';
 
@@ -586,46 +666,74 @@ TemplateLoader = {
 					 
 
 				 	// NAME INPUTS
-				 	this.writeField('house_email', 'Email') +
-				 	this.writeField('house_first_name', 'First Name') +
-				 	this.writeField('house_last_name', 'Last Name') +
-				 	this.writeField('house_password', 'Password') +
-				 	this.writeField('house_password2', 'Password (repeat)');
+				 	this.writeField('house_housename', 'House name') +
+				 	this.writeField('house_street', 'Street') +
+				 	this.writeField('house_city', 'City') +
+				 	this.writeField('house_state', 'State') +
+				 	this.writeField('house_zip', 'Zip');
 
 
-					// STATIC INFO
-					if(!house.isNew){
-						html += 	'<div class="info-panel">' +
-										'<b>house INFO:</b>' +
-										'<br />Status: ' + house.status + 
-										'<br />Created: ' + house.created + 
-										'<br />Updated: ' + house.updated + 
-									'<br /><br /><br /></div>';
+		if(house.isNew) {
+			html +=  
+				'<div id="btnFrame">' +
+					'<button id="add_button" type="button" class="btn btn-raised btn-primary">ADD</button>' + 
+					'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
+				'</div>' +
+			'</form>';
+			return html;
+		}
+
+
+
+		// BUTTONS
+		html +=
+			'<div id="btnFrame">' +
+				'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
+				'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
+				'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>' +
+			'</div>';
+	
+
+
+
+		// STATIC INFO
+		html += 	
+			'<div class="info-panel">' +
+				'<b>HOUSE INFO:</b>' +
+				'<br />Created: ' + house.created + 
+				'<br />Updated: ' + house.updated + 
+			'</div>' +
+			'<div class="info-panel">' +
+				'<b>USERS FOR HOUSE:</b>';
+
+//				console.log(house)
+
+				for(let user of house.userList){
+					console.log(house)
+					html += '<br />' + user.first_name + ' ' + user.last_name + 
+						' - <a id="removeacess_' + user.userId + '" class="remove_link">Remove Access</a>';
+				}
+				
+
+		html +=
+			'</div>' +
+			'<div class="info-panel">' +
+				'<b>ADD USER:</b><br /><br />' +
+				'<select id="adduser_selector">';
+
+					console.log(userList);
+
+					for(let user of userList.mainList){
+						html += '<option value="' + user.userId + '">' + user.first_name + ' ' + user.last_name + '</option>';
 					}
-					
- 
- 					// BUTTONS
-					'<div id="btnFrame">';
-						
 
-				if(house.isNew) {
-					html +=  
-						'<button id="add_button" type="button" class="btn btn-raised btn-primary">ADD</button>' + 
-						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>';
-				}
+		html +=	'</select>' +
+				'<button id="adduser_button" type="button" class="btn btn-raised btn-primary">GRANT ACCESS</button>' +
+			'</div>' + 
 
-				else {
-					html +=
-						'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
-						'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
-						'<br /><br /><br /><br /><h5>Delete house</h5><i>This cannot be undone.</i><br /><br />' +
-						'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>';
-				}
+		'</form>';
 
-
-		html +=			'</div>' +
-					'</form>';
-
+		
 		return html;
 	},
 

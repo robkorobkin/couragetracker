@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-		<title>RC Tracker</title>
+		<title>Courage Tracker</title>
 
 
 		<!-- GOOGLE FONTS -->
@@ -57,7 +57,7 @@
 			<div id="admin_links" style="display: none">
 				<br /><br /><b style="color: #777">ADMIN</b>
 				<div class="sidebarLink active"  id="UserListLink" onclick="ViewController.loadView('UserList')">Users</div>
-				<div class="sidebarLink" id="HousesListLink" onclick="ViewController.loadView('HousesList')">Houses</div>
+				<div class="sidebarLink" id="HousesListLink" onclick="ViewController.loadView('HouseList')">Houses</div>
 				<div class="sidebarLink" id="AllResidentsListLink" onclick="ViewController.loadView('AllResidentsList')">All Residents</div>
 				<div class="sidebarLink" id="AllUsersListLink" onclick="ViewController.loadView('AllExamList')">All Exams</div>
 			</div>

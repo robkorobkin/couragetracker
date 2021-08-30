@@ -83,10 +83,10 @@
 		function _getHouseByHouseId($houseId) {
 			
 			// VALIDATE PAYLOAD
-			if(!$houseId) exit ("Please provide an userId as the payload.");
+			if(!$houseId) exit ("Please provide a houseId as the payload.");
 
-			// QUERY DATABASE FOR RESIDENT
-			$config['where'] = 'houseId=' . parseInt($houseId);
+			// QUERY DATABASE FOR HOUSE
+			$config['where'] = 'houseId=' . intval($houseId);
 			$this -> db -> select("houses", $config);
 			$response = $this -> db -> getResponse();
 
@@ -241,6 +241,17 @@ RC Tracker - Lead Developer";
 				$user['current_house'] = $user['houses'][$user['current_house']];
 
 			}
+
+
+
+			// DO THIS ADDITIONAL STUFF IF THE USER IS AN ADMIN
+			if($user['status'] == 'admin'){
+
+				// GET ALL THE HOUSES AND USERS - WON'T SCALE
+				$user['allHouses'] = $this -> fetchHouseList();
+				$user['allUsers'] = $this -> fetchUserList();
+			}
+
 
 			$this -> user = $user;
 			
@@ -437,7 +448,7 @@ RC Tracker - Lead Developer";
 			
 			// INSERT IT
 			$insert_id = $this -> db -> insert("users", $newUser);
-			if(!$insert_id) $this -> _handleError("Unable to add user to database");
+			if(!$insert_id) return $this -> _handleError("Unable to add user to database");
 
 
 			// SEND THEM THE CONFIRMATION EMAIL
@@ -446,7 +457,8 @@ RC Tracker - Lead Developer";
 
 			// RETURN SUCCESS
 			return array(
-				"status" => "success"
+				"status" => "success",
+				"selectedUser" => $this -> fetchUserByUserId($insert_id)
 			);
 		}
 		
@@ -456,12 +468,15 @@ RC Tracker - Lead Developer";
 
 			// PROCESS NEW INPUT INTO DATA OBJECT
 			$updatedUser = array();
-			$fields = array("email", "password", "first_name", "last_name");
+			$fields = array("email", "password", "first_name", "last_name", "status");
 			foreach($fields as $f){
 				if(!isset($payload -> $f)) exit("Payload does not include the field: " . $f);
 				$updatedUser[$f] = $this -> db -> escapeString($payload -> $f);
 			}
 			$updatedUser['updated'] = date('Y-m-d  h:i:s A');
+
+			if(!isset($payload -> userId) || !is_int($payload -> userId)) exit("Bad User ID.");
+			$userId = $payload -> userId;
 
 
 			// CHECK IF EMAIL IS GOOD
@@ -476,23 +491,35 @@ RC Tracker - Lead Developer";
 
 
 			// GET THE OLD USER
-			$oldUser = $this -> _getUserBy(array("UserId" => $payload -> userId));
+			$oldUser = $this ->_getFullUserByUserId($userId);
 		
 
 			// CHECK TO SEE IF YOU HAVE ACCESS TO DO THE UPDATE
-			if($oldUser['access_token'] == $this -> active_user['access_token'] && $this -> active_user['status'] != 'admin'){
-				return $this -> _handleError("You are trying to update a user other than the one you are logged in as.");
+			if($oldUser['access_token'] != $this -> active_user['access_token'] && $this -> active_user['status'] != 'admin'){
+				return $this -> _handleError(
+					"You are trying to update a user other than the one you are logged in as, and you are not an admin.");
 			}
 		
 			
 			// UPDATE IT
-			$where = array("userId" => $payload -> userId);
+			$where = "userId=" . $userId;
 			if(!$this -> db -> update("users", $updatedUser, $where)){
 				return $this -> _handleError("Something went wrong. Not clear why it didn't save.");
 			}
 
-			return $this -> _getFullUserByUserId();
+			return array(
+				"status" => "success",
+				"selectedUser" => $this -> fetchUserByUserId($userId)
+			);
+
 		}
+
+
+
+
+		
+
+
 
 
 
@@ -506,9 +533,6 @@ RC Tracker - Lead Developer";
 		**********************************/
 
 		function fetchUserList(){
-
-			$user = $this -> user;
-			if($user['status'] != 'admin') return $this -> _handleError("You don't have admin access. Can't load.");
 
 			// QUERY DATABASE FOR RESIDENT
 			$sql = 'SELECT u.userId, u.email, u.first_name, u.last_name, u.created, u.updated, u.status, u.current_house, h.housename 
@@ -530,8 +554,121 @@ RC Tracker - Lead Developer";
 		}
 
 
-		
+		function deactivateUser($userId){
 
+
+			// VALIDATE INPUT
+			if(!$userId || !is_int($userId)) return $this -> _handleError ("No userid or bad userid.");
+			
+
+			// RIGHT NOW - ONLY SITE ADMINS CAN DEACTIVATE USERS
+			if($this -> active_user['status'] != 'admin') return $this -> _handleError("Error: Only admins can delete users.");
+
+
+			// CAN'T DELETE YOURSELF
+			if($this -> active_user['userId'] == $userId) return $this -> _handleError("You cannot delete yourself.");
+
+
+			// GET THE OLD USER
+			$oldUser = $this -> _getFullUserByUserId($userId);
+		
+			// DO SOMETHING WITH USER BEFORE YOU DEACTIVATE IT??
+
+
+
+			// PERFORM DEACTIVATION
+			$updatedUser = array(
+				"status" => "deactivated",
+				"updated" => date('Y-m-d  h:i:s A')
+			);
+			if(!$this -> db -> update("users", $updatedUser, "userId=" . $userId)){
+				return $this -> _handleError("Something went wrong. Not clear why it didn't save.");
+			}
+
+
+			 // log this somewhere?
+
+			
+			return array("status" => "true");
+		}
+
+
+
+		function loseAccessToHouse($payload){
+
+
+			// PROCESS NEW INPUT INTO DATA OBJECT
+			if(!$payload) exit ("No payload provided");
+			if($this -> active_user['status'] != 'admin') return $this -> _handleError("Error: Only admins can delete users.");
+
+
+			$req = array();
+			$fields = array("userId", "houseId");
+			foreach($fields as $f){
+				if(!isset($payload -> $f)) exit("Payload does not include the field: " . $f);
+				if(!is_int($payload -> $f))  exit("This field must be an integer: " . $f);
+
+				$req[$f] = $payload -> $f;
+			}
+
+
+			$sql = "DELETE FROM usershouses where userId=" . $req['userId'] . " AND houseId=" . $req['houseId'];
+			$this->db->sql($sql);
+
+			return $this -> fetchUserByUserId($req['userId']);
+			
+		}
+
+
+		function grantAccessToHouse($payload){
+
+			// PROCESS NEW INPUT INTO DATA OBJECT
+			if(!$payload) exit ("No payload provided");
+
+			$req = array();
+			$fields = array("userId", "houseId");
+			foreach($fields as $f){
+				if(!isset($payload -> $f)) exit("Payload does not include the field: " . $f);
+				if(!is_int($payload -> $f))  exit("This field must be an integer: " . $f);
+
+				$req[$f] = $payload -> $f;
+			}
+
+			if(!isset($payload -> return_type)) exit("Payload does not specify return type: house or user.");
+
+
+			// CHECK TO SEE IF THE USER ALREADY HAS ACCESS?
+			$this -> db -> sql("SELECT * from usershouses where houseId=" . $req['houseId'] . " AND userId=" . $req['userId']);
+			$assignments = $this -> db -> getResponse();
+			if(count($assignments) != 0){
+				return $this -> _handleError("Client should have blocked this. Assignment already exists.");
+			}
+
+
+			// INSERT
+			$assignment = array(
+				"userId"	=> $req['userId'],
+				"houseId"	=> $req['houseId'],
+				"created"	=> date('Y-m-d  h:i:s A'),
+				"updated"	=> date('Y-m-d  h:i:s A'),
+
+				// for now, "user" is the only assignment status available
+				"status"	=> "user" 
+			);
+			$this -> db -> insert("usershouses", $assignment);
+
+
+			if($payload -> return_type == "user"){
+				return $this -> fetchUserByUserId($req['userId']);	
+			}
+			
+			else if($payload -> return_type == "house"){
+				return $this -> fetchHouseByHouserId($req['houseId']);	
+			}
+
+			else $this -> _handleError("Can't return type: " . $payload -> return_type);
+			
+		}
 		
 
 		/**********************************
@@ -610,7 +747,7 @@ RC Tracker - Lead Developer";
 			$houseId = parseInt($payload -> houseId);
 
 			$confirm = $this -> db -> update("houses", $newHouse, array("houseId" => $houseId));
-			if(!$confirm) $this -> _handleError("House failed to save.");
+			if(!$confirm) return $this -> _handleError("House failed to save.");
 			return array("newHouse" => $this -> getHouseByHouseId($houseId));
 		}
 
@@ -659,10 +796,23 @@ RC Tracker - Lead Developer";
 			$this -> db -> sql($sql);
 			$response = $this -> db -> getResponse();
 			return $response;
-
-
 		}
 
+		function fetchHouseByHouseId($houseId){
+			if(!isset($houseId) || !is_int($houseId)) exit("Bad House ID");
+			
+			$house = $this -> _getHouseByHouseId($houseId);
+
+			if(!$house) exit("BAD HOUSE ID");
+
+
+			$sql = 'SELECT * from users u, usershouses uh where u.userId=uh.userId AND uh.houseId=' . $houseId;
+			$this -> db -> sql($sql);
+			$house['users'] = $this -> db -> getResponse();
+
+			return $house;
+
+		}
 
 
 	

@@ -123,7 +123,7 @@ class Resident {
 			}
 
 
-			if(this.acesScore != ''){
+			if(this.acesScore && this.acesScore != ''){
 				let e = JSON.parse(this.acesScore);
 				e.answers = JSON.stringify(e.answers); // hack - normal exams store answer array in sql as string
 				this.acesExam = new Exam(aces_assessmentJSON, e);
@@ -181,7 +181,7 @@ class Resident {
 		}
 		if(exam.examTemplate.version == 2) this.acesScore = JSON.stringify(personalScore);
 		if(exam.examTemplate.version == 3) this.harmScore = JSON.stringify(personalScore);
-		
+
 		this.save(callbackFunction);
 	}
 }
@@ -481,7 +481,8 @@ class User {
 
 	constructor(uJSON){
 
-		this.fields = ['userId', 'email', 'first_name', 'last_name', 'password', 'created', 'updated', 'status', 'current_house', 'housename' ];
+		this.fields = [	'userId', 'email', 'first_name', 'last_name', 'password', 'created', 'updated', 
+						'status', 'current_house', 'housename', 'houses' ];
 
 		for(let f of this.fields) this[f] = '';
 		this.isNew = true;
@@ -501,7 +502,7 @@ class User {
 	}
 
 	// copy these fields into request object
-	save(){
+	save(callbackFunction){
 		let req = {}
 		for(let f of this.fields){ 
 			req[f] = this[f];
@@ -517,9 +518,17 @@ class User {
 		}
 		
 		api.callApi(method, req, function(response){
-			response.isNew = isNew;
+			console.log(response)
 			callbackFunction(response);
 		});
+	}
+
+
+	deactivate(callbackFunction){
+		api.callApi('user_deactivateUser', parseInt(this.userId), function(){
+			callbackFunction();
+		});
+
 	}
 }
 
@@ -534,6 +543,76 @@ class UserList extends BaseList {
 		this.mainList.length = 0; // empty it without losing the byte address
 		for(let uJSON of userListJSON){
 			this.mainList.push(new User(uJSON));
+		}
+	}
+}
+
+
+
+class House {
+
+	constructor(hJSON){
+
+		this.fields = ['houseId', 'housename', 'street', 'city', 'state', 'zip', 'created', 'updated'];
+
+		for(let f of this.fields) this[f] = '';
+		this.isNew = true;
+		this.display = true;
+		this.userList = [];
+
+
+		if(hJSON){
+			for(let f of this.fields) {
+				if(f in hJSON){
+					this[f] = hJSON[f];	
+				}
+			}
+			this.isNew = false;
+			this.created_display = formatDateForOutput(this.created.split(' ')[0]);
+
+			if('users' in hJSON && hJSON.users.length != 0){
+				this.userList = hJSON.users;
+			}
+		}
+	}
+
+	// copy these fields into request object
+	save(callbackFunction){
+		let req = {}
+		for(let f of this.fields){ 
+			req[f] = this[f];
+		}
+
+
+		if(this.isNew){
+			var method = "user_createHoue" ;
+		}
+		else {
+			var method = "user_updateHouse";
+			req.userId = parseInt(this.userId);
+		}
+		
+		api.callApi(method, req, function(response){
+			console.log(response)
+			callbackFunction(response);
+		});
+	}
+
+
+	
+}
+
+class HouseList extends BaseList {
+
+	constructor(){
+		super();
+		this.search_fields.push('street', 'city', 'housename');
+	}
+
+	loadList(houseListJSON){
+		this.mainList.length = 0; // empty it without losing the byte address
+		for(let hJSON of houseListJSON){
+			this.mainList.push(new House(hJSON));
 		}
 	}
 }
@@ -576,6 +655,13 @@ api = {
 
 				response = response.response;
 			}
+
+
+			if('status' in response && response.status == 'error'){
+				$('#error_message').html(escapeForHtml(response.message));
+				return;	
+			}
+
 			callbackFunction(response);
 		}
 
