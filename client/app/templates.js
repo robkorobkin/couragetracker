@@ -171,9 +171,18 @@ TemplateLoader = {
 					
 					// DOB INPUT
 					'<div class="form-group">' +
-						'<label for="resident_dob" class="bmd-label-floating">Date of Birth</label>' +
+						'<label for="resident_dob" class="bmd-label-floating">Date of Birth (YYYY-MM-DD)</label>' +
 						'<input type="text" class="form-control" id="resident_dob">' +
 					'</div>' +
+
+
+					// MOVE-IN DATE INPUT
+					'<div class="form-group">' +
+						'<label for="resident_movein_date" class="bmd-label-floating">Move-In Date (YYYY-MM-DD)</label>' +
+						'<input type="text" class="form-control" id="resident_movein_date">' +
+					'</div>' +
+
+
  
  					// PHONE / EMAIL INPUTS
  					'<div class="form-group">' +
@@ -581,12 +590,6 @@ TemplateLoader = {
 				}
 
 		html +=
-			'</div>' +
-
-			'<br /><br /><br />' +
-
-			'<div class="info-panel">' +
-				'<b>ADD HOUSE:</b><br /><br />' +
 				'<div class="form-group">' +
 					'<label class="bmd-label-floating" for="addhouse_selector">Add House</label>' +
 					'<select id="addhouse_selector" class="form-control">';
@@ -634,6 +637,9 @@ TemplateLoader = {
 							'<tr class="headerRow">' +
 								'<th id="control-houseId">ID</th>' +
 								'<th id="control-housename">Name</th>' +
+								'<th id="control-housename">Street</th>' +
+								'<th id="control-city">City</th>' +
+								'<th id="control-state">State</th>' +
 							'</tr>' +
 							'<tbody class="mainTable" id="housesTable">' +
 							'</tbody>' +
@@ -652,6 +658,9 @@ TemplateLoader = {
 								parseInt(house.houseId) + 
 							'</td>' + 
 							'<td>' + escapeForHtml(house.housename) + '</td>' +
+							'<td>' + escapeForHtml(house.street) + '</td>' +
+							'<td>' + escapeForHtml(house.city) + '</td>' +
+							'<td>' + escapeForHtml(house.state) + '</td>' +
 						'</tr>';
 			}
 		});
@@ -690,7 +699,7 @@ TemplateLoader = {
 			'<div id="btnFrame">' +
 				'<button id="save_button" type="button" class="btn btn-raised btn-primary">SAVE</button>' +
 				'<button id="cancel_button" type="button" class="btn btn-raised btn-secondary">CANCEL</button>' +
-				'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>' +
+				//'<button id="delete_button" type="button" class="btn btn-raised btn-danger">DELETE</button>' +
 			'</div>';
 	
 
@@ -698,11 +707,12 @@ TemplateLoader = {
 
 		// STATIC INFO
 		html += 	
-			'<div class="info-panel">' +
+			'<br /><br /><br /><div class="info-panel">' +
 				'<b>HOUSE INFO:</b>' +
 				'<br />Created: ' + house.created + 
 				'<br />Updated: ' + house.updated + 
 			'</div>' +
+			'<br /><br /><br />' +
 			'<div class="info-panel">' +
 				'<b>USERS FOR HOUSE:</b>';
 
@@ -714,21 +724,20 @@ TemplateLoader = {
 						' - <a id="removeacess_' + user.userId + '" class="remove_link">Remove Access</a>';
 				}
 				
+				html +=
+				'<div class="form-group">' +
+					'<label class="bmd-label-floating" for="adduser_selector">Add User</label>' +
+					'<select id="adduser_selector" class="form-control">';
 
-		html +=
-			'</div>' +
-			'<div class="info-panel">' +
-				'<b>ADD USER:</b><br /><br />' +
-				'<select id="adduser_selector">';
+						for(let user of userList.mainList){
+							if(user.status == 'admin') continue;
+							html += '<option value="' + user.userId + '">' + user.first_name + ' ' + user.last_name + '</option>';
+						}
 
-					console.log(userList);
-
-					for(let user of userList.mainList){
-						html += '<option value="' + user.userId + '">' + user.first_name + ' ' + user.last_name + '</option>';
-					}
-
-		html +=	'</select>' +
+		html +=		'</select>' +
+				'</div>' +
 				'<button id="adduser_button" type="button" class="btn btn-raised btn-primary">GRANT ACCESS</button>' +
+
 			'</div>' + 
 
 		'</form>';

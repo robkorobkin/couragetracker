@@ -585,7 +585,7 @@ class House {
 
 
 		if(this.isNew){
-			var method = "user_createHoue" ;
+			var method = "user_createHouse" ;
 		}
 		else {
 			var method = "user_updateHouse";

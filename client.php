@@ -31,7 +31,7 @@
 		<!-- HEADER -->
 		<div id="header">
 			<div id="appLogoFrame">
-				<img src="client/theme/logo.jpg" style="height: 25px; margin: 15px" alt="">
+				<img src="client/theme/app_logo.png" style="height: 54px; margin: 6px 15px" alt="">
 			</div>
 
 			<div id="mainSearchFrame">
@@ -50,16 +50,17 @@
 		<div id="sidebar" class="card">
 			<div class="sidebarLink active" onclick="ViewController.loadView('ResidentList')" id="ResidentListLink">Residents</div>
 			<div class="sidebarLink" onclick="ViewController.loadView('ExamList')" id="ExamListLink">Questionnaires</div>
-			<div class="sidebarLink" id="AnalysisLink">Analysis</div>
-			<div class="sidebarLink" onclick="api.logout()">Log Out</div>
+<!-- 			<div class="sidebarLink" id="AnalysisLink">Analysis</div>
+ -->			<div class="sidebarLink" onclick="api.logout()">Log Out</div>
 
 
 			<div id="admin_links" style="display: none">
 				<br /><br /><b style="color: #777">ADMIN</b>
 				<div class="sidebarLink active"  id="UserListLink" onclick="ViewController.loadView('UserList')">Users</div>
 				<div class="sidebarLink" id="HousesListLink" onclick="ViewController.loadView('HouseList')">Houses</div>
-				<div class="sidebarLink" id="AllResidentsListLink" onclick="ViewController.loadView('AllResidentsList')">All Residents</div>
-				<div class="sidebarLink" id="AllUsersListLink" onclick="ViewController.loadView('AllExamList')">All Exams</div>
+			<!-- 	<div class="sidebarLink" id="AllResidentsListLink" onclick="ViewController.loadView('AllResidentsList')">All Residents</div>
+			 	<div class="sidebarLink" id="AllUsersListLink" onclick="ViewController.loadView('AllExamList')">All Exams</div>
+			 -->
 			</div>
 			
 

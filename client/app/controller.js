@@ -805,7 +805,7 @@ ViewController = {
 		// LOAD THE HTML
 		this.setLeftHeader('RC Tracker - Houses List' +
 							'<button type="button" class="btn btn-raised btn-success" style="float: right" ' +
- 							' id="adduser_button"> Add House</button>');
+ 							' id="addhouse_button"> Add House</button>');
 
 		this.setMainBody(TemplateLoader.writeHouseListMainHTML());
 
@@ -872,7 +872,7 @@ ViewController = {
 		// LOAD THE HTML
 		let h = '';
 		if(!house.isNew) {
-			h = escapeForHtml(house.first_name) + ' ' + escapeForHtml(house.last_name);
+			h = escapeForHtml(house.housename);
 		}
 		else {
 			h = 'ADD NEW HOUSE';
@@ -885,8 +885,8 @@ ViewController = {
 		// IF YOU'RE EDITING, LOAD THE FORM
 		if(!house.isNew){
 			for(var field in house){
-				if($('#user_' + field).length != 0) {
-					$('#user_' + field).val(house[field]);
+				if($('#house_' + field).length != 0) {
+					$('#house_' + field).val(house[field]);
 				}
 			}
 		}
@@ -932,8 +932,12 @@ ViewController = {
 			// POST TO API AND UPDATE MODEL
 			if(goAhead){
 				console.log('trying to submit to api');
-				console.log(user)
-				house.save((houseListJSON) => ViewController.loadHouseListView(houseListJSON));
+
+
+				house.save((responseJSON) => {
+					ViewModel.selected_house = new House(responseJSON.selectedHouse);
+					ViewController.loadView('HouseSummary');	
+				});
 			}
 		});	
 
@@ -944,8 +948,9 @@ ViewController = {
 
 			// build the request object
 			let req = {
-				houseId : house.houseId,
-				userId : parseInt($(this).attr('id').split('_')[1])
+				houseId : parseInt(house.houseId),
+				userId : parseInt($(this).attr('id').split('_')[1]),
+				return_type : "house"
 			}
 
 			// submit it to server
@@ -961,11 +966,11 @@ ViewController = {
 		$('#adduser_button').click(function(){
 
 			// get value of select box
-			let userId = parseInt('#adduser_selector').val();
+			let userId = parseInt($('#adduser_selector').val());
 
 
 			// check if assignment already exists
-			for(let assignment of house.users){
+			for(let assignment of house.userList){
 				if(assignment.userId == userId){
 					alert('Error. User is already assigned to that house.');
 					return;
@@ -974,17 +979,17 @@ ViewController = {
 
 			// build the request object
 			let req = {
-				houseId : userId,
-				userId : house.houseId,
+				userId : userId,
+				houseId : parseInt(house.houseId),
 				return_type : "house"
 			}
 
 			// submit it to server
-			api.callApi('user_grantAccessToHouse', req, function(userJSON){
+			api.callApi('user_grantAccessToHouse', req, function(houseJSON){
 				
 				// reload the UI (list still has old data, update when you reload it)
 				ViewModel.selected_house = new House(houseJSON);
-				ViewController.loadView('UserSummary');
+				ViewController.loadView('HouseSummary');
 			})	
 
 		})

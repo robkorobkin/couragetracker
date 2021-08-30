@@ -208,6 +208,18 @@ RC Tracker - Lead Developer";
 			if(count($connections) == 0){
 				$user['message'] = "No houses.";
 				$user['houses'] = array();
+
+
+				// ADMIN ACCOUNTS DON'T HAVE "ASSIGNMENTS" GRANTED TO THEM
+				if($user['status'] == "admin"){
+
+					$houseId = $user['current_house'];
+
+					$this -> db -> sql("SELECT * from houses where houseId=" . $houseId);
+					$house = $this -> db -> getResponse()[0];
+					$house['access_level'] = "admin";
+					$user['current_house'] = $house;
+				}
 			}
 			else {
 				foreach($connections as $c){
@@ -615,7 +627,15 @@ RC Tracker - Lead Developer";
 			$sql = "DELETE FROM usershouses where userId=" . $req['userId'] . " AND houseId=" . $req['houseId'];
 			$this->db->sql($sql);
 
-			return $this -> fetchUserByUserId($req['userId']);
+			if($payload -> return_type == "user"){
+				return $this -> fetchUserByUserId($req['userId']);	
+			}
+			
+			else if($payload -> return_type == "house"){
+				return $this -> fetchHouseByHouseId($req['houseId']);	
+			}
+
+			else $this -> _handleError("Can't return type: " . $payload -> return_type);
 			
 		}
 
@@ -663,7 +683,7 @@ RC Tracker - Lead Developer";
 			}
 			
 			else if($payload -> return_type == "house"){
-				return $this -> fetchHouseByHouserId($req['houseId']);	
+				return $this -> fetchHouseByHouseId($req['houseId']);	
 			}
 
 			else $this -> _handleError("Can't return type: " . $payload -> return_type);
@@ -702,28 +722,35 @@ RC Tracker - Lead Developer";
 			$insert_id = $this -> db -> insert("houses", $newHouse);
 
 
-			// UPDATE AUTHORSHIP
-			$connection = array(
-				"houseId" 	=> $insert_id,
-				"userId" 	=> $this -> user["userId"],
-				"created" 	=> date('Y-m-d  h:i:s A'),
-				"updated" 	=> date('Y-m-d  h:i:s A'),
-				"status" 	=> "creator"
-			);
-			$this -> db -> insert("usershouses", $connection);
+
+			// IF HOUSE ISN'T BEING CREATED BY AN ADMIN, GRANT CREATOR ACCESS
+
+			if($this -> active_user['status'] != 'admin'){
+							// UPDATE AUTHORSHIP
+				$connection = array(
+					"houseId" 	=> $insert_id,
+					"userId" 	=> $this -> user["userId"],
+					"created" 	=> date('Y-m-d  h:i:s A'),
+					"updated" 	=> date('Y-m-d  h:i:s A'),
+					"status" 	=> "creator"
+				);
+				$this -> db -> insert("usershouses", $connection);
 
 
-			// UPDATE USER OBJECT
-			$sql = "UPDATE users set current_house=" . $insert_id . ", updated=\"" . date('Y-m-d  h:i:s A') . "\", " .
-					"status='active' " .
-					"WHERE userId=" . $this -> user["userId"];
-			$this -> db -> sql($sql);
+				// UPDATE USER OBJECT
+				$sql = "UPDATE users set current_house=" . $insert_id . ", updated=\"" . date('Y-m-d  h:i:s A') . "\", " .
+						"status='active' " .
+						"WHERE userId=" . $this -> user["userId"];
+				$this -> db -> sql($sql);
+
+			}
+
 
 
 			// RETURN INSERT ID
 			return array(
 				"status"	=> "success",
-				"newHouse" 	=> $insert_id
+				"selectedHouse" => $this -> fetchHouseByHouseId($insert_id)
 			);
 		}
 
@@ -744,11 +771,11 @@ RC Tracker - Lead Developer";
 
 			// ToDo: Is the user authorized to make this change?
 
-			$houseId = parseInt($payload -> houseId);
+			$houseId = intval($payload -> houseId);
 
-			$confirm = $this -> db -> update("houses", $newHouse, array("houseId" => $houseId));
+			$confirm = $this -> db -> update("houses", $newHouse, "houseId=" . $houseId);
 			if(!$confirm) return $this -> _handleError("House failed to save.");
-			return array("newHouse" => $this -> getHouseByHouseId($houseId));
+			return array("selectedHouse" => $this -> fetchHouseByHouseId($houseId));
 		}
 
 		function _lookupHouseAssignment($houseId, $userId){
