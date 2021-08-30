@@ -1,6 +1,6 @@
 <!-- LOGIN FORM -->
 <form id="login_form" <?php if($mode != "login") echo 'style="display: none;"'; ?>>
-	<h4>Login</h4>
+	<img src="client/theme/app_logo.png" style="width: 100%; margin: 6px 0px" alt="">
 	<div class="form-group">
 		<label for="login_email" id="loginlabel_email" class="bmd-label-floating">User Email</label>
 		<input type="text" class="form-control" id="login_email">
