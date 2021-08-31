@@ -522,7 +522,7 @@ TemplateLoader = {
 
 		let html = 	
 
-		'<form id="user_edit_frame">';
+		'<form id="user_edit_frame">' +
 					 
 
 		 	// NAME INPUTS
