@@ -461,7 +461,15 @@ RC Tracker - Lead Developer";
 			$newUser['created'] = date('Y-m-d  h:i:s A');
 			$newUser['updated'] = date('Y-m-d  h:i:s A');
 			$newUser['current_house'] = 0;
+
+
+			// normally, user has to confirm their email address
 			$newUser['status'] 	= "raw"; 
+
+
+			// but admins can manually set it when the user is created
+			if($this -> active_user['status'] == 'admin') $newUser['status'] = $userJSON -> status;
+
 
 
 			// CHECK IF EMAIL IS GOOD
@@ -511,6 +519,7 @@ RC Tracker - Lead Developer";
 			$fields = array("email", "password", "first_name", "last_name", "status");
 			foreach($fields as $f){
 				if(!isset($payload -> $f)) exit("Payload does not include the field: " . $f);
+				
 				$updatedUser[$f] = $this -> db -> escapeString($payload -> $f);
 			}
 			$updatedUser['updated'] = date('Y-m-d  h:i:s A');
@@ -527,7 +536,8 @@ RC Tracker - Lead Developer";
 			// ToDo: Make sure password passes validation requirements.
 
 			// HASH THE PASSWORD
-			$updatedUser['password'] = password_hash($updatedUser['password'], PASSWORD_DEFAULT);
+			if($updatedUser['password'] == '') unset($updatedUser['password']);
+			else $updatedUser['password'] = password_hash($updatedUser['password'], PASSWORD_DEFAULT);
 
 
 			// GET THE OLD USER
