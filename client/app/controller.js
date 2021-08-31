@@ -10,6 +10,8 @@ var ViewModel = {
 
 	active_view : 'ResidentList',
 
+	active_user : false,
+
 	examTemplate : recovery_capital_assessmentJSON,
 
 	residentList : new ResidentList(),
@@ -87,6 +89,9 @@ ViewController = {
 
 	// RUN THIS WHEN THE USER LOADS (ATTACHED TO FIRST API CALL)
 	loadUser : (user) => {
+
+		ViewModel.active_user = user;
+
 		if(user.status == 'admin'){
 			$('#admin_links').show();
 			ViewModel.houseList.loadList(user.allHouses);
@@ -872,7 +877,9 @@ ViewController = {
 		// LOAD THE HTML
 		let h = '';
 		if(!house.isNew) {
-			h = escapeForHtml(house.housename);
+			h = escapeForHtml(house.housename) +
+				'<button type="button" class="btn btn-raised btn-success" style="float: right" ' +
+ 							' id="loadhouse_button"> Load House</button>';
 		}
 		else {
 			h = 'ADD NEW HOUSE';
@@ -880,6 +887,16 @@ ViewController = {
 
 		this.setLeftHeader(h);
 		this.setMainBody(TemplateLoader.writeHouseMainHTML(house, ViewModel.userList));
+
+
+		// LOAD HOUSE
+		$('#loadhouse_button').click(function(){
+			api.callApi('user_loadHouse', parseInt(house.houseId), function(){
+				ViewModel.active_user.current_house = house;
+				$('#houseName').html(house.housename);
+			})
+		})
+
 
 
 		// IF YOU'RE EDITING, LOAD THE FORM

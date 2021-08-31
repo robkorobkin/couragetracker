@@ -205,6 +205,7 @@ RC Tracker - Lead Developer";
 			// FIGURE OUT WHAT THE USER HAS ACCESS TO
 			$this -> db -> select("usershouses", array("where" => "userId=" . intval($user['userId'])));
 			$connections = $this -> db -> getResponse();
+
 			if(count($connections) == 0){
 				$user['message'] = "No houses.";
 				$user['houses'] = array();
@@ -270,6 +271,33 @@ RC Tracker - Lead Developer";
 			return $user;
 		}
 
+
+		function loadHouse($houseId){
+
+			if(!$houseId || !is_int($houseId)) exit("We need an int.");
+			$houseId = intval($houseId);
+
+
+			$goAhead = false;
+
+			// IS THE USER AN ADMIN
+			if($this -> active_user['status'] == 'admin') $goAhead = true;
+
+			// IF NOT, DO THEY HAVE ACCESS TO THE HOUSE
+			else if(isset($this -> active_user['houses'][$houseId])) $goAhead = true;
+
+
+			// IF GREEN LIGHT, UPDATE USER'S CURRENT_HOUSE
+			if(!$goAhead) exit("Either you're not an admin or you don't have access.");
+			$sql = "UPDATE users SET current_house=" . $houseId . " where userId=" . $this -> active_user["userId"];
+			$this->db->sql($sql);
+
+
+			return array(
+				"status" => "success"
+			);
+
+		}
 
 
 		// CONFIRM ACCESS TOKEN

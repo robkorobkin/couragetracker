@@ -520,9 +520,9 @@ TemplateLoader = {
 
 	writeUserMainHTML : function(user, houseList){
 
-		let html = '';
+		let html = 	
 
-		html +=	'<form id="house_edit_frame">' +
+		'<form id="user_edit_frame">';
 					 
 
 		 	// NAME INPUTS
@@ -669,10 +669,9 @@ TemplateLoader = {
 
 	writeHouseMainHTML : function(house, userList){
 
-		let html = '';
-
-		html +=	'<form id="house_edit_frame">' +
-					 
+		let html = 
+			
+			'<form id="house_edit_frame">' +
 
 				 	// NAME INPUTS
 				 	this.writeField('house_housename', 'House name') +
