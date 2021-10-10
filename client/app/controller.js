@@ -1,9 +1,9 @@
 
 
 // ViewController : global static
-// - all methods fetch template from TemplateLoader, attach DOM events / load data from model into template
+// - all methods: fetch template from TemplateLoader, attach DOM events / load data from model into template
 // - all actual data is retained in ViewModel
-// - ViewController just holds state of the app interfaces, only points to data about residents, exams, etc. in model
+// - ViewController only points to data about residents, exams, etc. in model
 
 
 var ViewModel = {
@@ -109,6 +109,7 @@ ViewController = {
 		ViewModel.residentList.fetchResidentList(function(response){
 			ViewModel.residentList.loadData(response);
 			ViewModel.examList.loadFromResidentList(ViewModel.residentList);
+			ViewModel.user.current_house.residentList = ViewModel.residentList;
 			callbackFunction();
 		});
 	},
@@ -355,7 +356,7 @@ ViewController = {
 
 		// HANDLE BUTTON EVENTS
 		$('#cancel_button').click(function(){
-			ViewController.loadView('ResidentDash');
+			ViewController.loadView('ResidentList');
 		})
 
 

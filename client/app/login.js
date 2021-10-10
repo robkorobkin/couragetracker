@@ -87,7 +87,7 @@ $(function(){
 	// HANDLE ONLOAD EVENTS
 	if(mode == "confirm_email"){
 
-		api.callApi('user_confirmemail', access_token, (response) => {
+		api.callApi('login_confirmemail', access_token, (response) => {
 			if("status" in response && response.status == "error"){
 				$('#confirmerror').html(escapeForScreen(response.message));
 				return;
@@ -99,7 +99,7 @@ $(function(){
 
 	if(mode == "reset_pw"){
 
-		api.callApi('user_confirmaccesstoken', access_token, (response) => {
+		api.callApi('admin_login', access_token, (response) => {
 
 			if("status" in response && response.status == "error"){
 				$('#resetpw_form').html(escapeForScreen(response.message)).show();
@@ -112,7 +112,7 @@ $(function(){
 
 	if(mode == "pickhouse"){
 
-		api.callApi('user_fetchHouseList', access_token, (response) => {
+		api.callApi('public_fetchHouseList', access_token, (response) => {
 
 			if("status" in response && response.status == "error"){
 				$('#load_error').show();
@@ -173,7 +173,7 @@ LOGIN USER
 		// HANDLE LOGIN
 		if(green_light){
 
-			api.callApi("user_login", login_request, function(response){
+			api.callApi("admin_login", login_request, function(response){
 
 				if(!("status" in response)){
 					console.log('API is being weird.');
@@ -185,23 +185,26 @@ LOGIN USER
 				}
 
 
+				let user = response.payload;
+
 				// SAVE USER OBJECT IN COOKIE
-				localStorage.access_token = response.access_token;
-				localStorage.userJSON = JSON.stringify(response.user);
+
+				localStorage.access_token = user.access_token;
+				localStorage.userJSON = JSON.stringify(user);
 
 				// if user has an active account, just bring them into the app
-				if(response.status == "active" || response.status == "admin"){
+				if(user.status == "active" || user.status == "admin"){
 					window.location = "client.php";
 				}
 
 				// if user has a "raw" account, bring them to pick a house
-				if(response.status == "raw"){
+				if(user.status == "raw"){
 					$('#register_confirm').show();
 					$('#login_form').hide();
 				}
 
-				if(response.status == 'confirmed'){
-					window.location = "index.php?v=pickhouse&access_token=" + response.access_token;				
+				if(user.status == 'confirmed'){
+					window.location = "index.php?v=pickhouse&access_token=" + user.access_token;				
 				}
 
 
@@ -297,7 +300,7 @@ SEND PASSWORD REMINDER
 		if(email == '') return;
 
 
-		api.callApi("user_sendreminder", email, function(response){
+		api.callApi("public_sendReminder", email, function(response){
 
 			if(!("status" in response)){
 				console.log('API is being weird.');
@@ -357,7 +360,7 @@ RESET PASSWORD
 
 		// CALL API
 		if(green_light){
-			api.callApi("user_resetPW", pw1, function(response){
+			api.callApi("login_resetPW", pw1, function(response){
 				if(response.status == "error"){
 					$('#reset_errorbox').html(escapeForScreen(response.message)).show();
 				}
@@ -419,11 +422,10 @@ RESET PASSWORD
 		$('#houseselect_form').html(html).show();
 
 		$('#requestaccess_button').click(function(){
-			let req = {
-				userId : ViewModel.user.userId,
-				houseId : ViewModel.requestedHouse.houseId
-			}
-			api.callApi('user_requestHouseAssignment', req, function(response){
+			
+			let req = ViewModel.requestedHouse.houseId;
+			
+			api.callApi('login_requestHouseAssignment', req, function(response){
 				if(response.status == "error"){
 					$('#request_errorbox').html(escapeForScreen(response.message)).show();
 				}
@@ -476,7 +478,7 @@ RESET PASSWORD
 		}
 
 		if(green_light){
-			api.callApi('user_createHouse', house, function(response){
+			api.callApi('login_createHouse', house, function(response){
 				if(response.status == "error"){
 					$('#register_errorbox').html(response.message);
 				}

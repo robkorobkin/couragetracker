@@ -212,6 +212,15 @@ label.error {
 	text-decoration: underline;
 }
 
+#mainTable .headerRowBlast th {
+	color: black;
+	line-height: 20px;
+	padding-top:  20px;
+}
+
+#blast_edit_frame .checkbox label .checkbox-decorator, label.checkbox-inline .checkbox-decorator  {
+	margin-top: -1.2em; margin-left: .5em;
+}
 
 
 

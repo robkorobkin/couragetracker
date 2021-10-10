@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-		<title>Courage Tracker</title>
+		<title>Courage Tracke - Take Questionnaire!</title>
 
 
 		<!-- GOOGLE FONTS -->
@@ -20,7 +20,7 @@
 
 
         <!-- LOAD APP STYLES -->
-		<link rel="stylesheet" href="client/theme/client.css?v=<?php echo time(); ?>">
+		<link rel="stylesheet" href="client/theme/simple.css?v=<?php echo time(); ?>">
 
 
 		<!-- FAVICON -->
@@ -36,58 +36,25 @@
 
 	<body>
 	
+<style>
+html, body {
+	background:  black;
+}
+	#mainBuffer {
+		height:  667px; width:  375px;
+		background: white;
+		margin:  100px auto;
+		overflow:  scroll;
+	}
 
-		<!-- HEADER -->
-		<div id="header">
-			<div id="appLogoFrame">
-				<img src="client/theme/app_logo.png" style="height: 54px; margin: 6px 15px" alt="">
-			</div>
-
-			<div id="mainSearchFrame">
-				<input type="text" id="mainSearch" class="active">		
-			</div>
-			
-
-			<div id="rightHeaderFrame">
-				<div id="houseName"></div>
-			</div>
-		</div>
-
-
-
-		<!-- SIDEBAR -->
-		<div id="sidebar" class="card">
-			<div class="sidebarLink active" onclick="ViewController.loadView('ResidentList')" id="ResidentListLink">Residents</div>
-			<div class="sidebarLink" onclick="ViewController.loadView('ExamList')" id="ExamListLink">Questionnaires</div>
-			<div class="sidebarLink" onclick="ViewController.loadView('BlastList')" id="BlastListLink">Blasts</div>
-<!-- 			<div class="sidebarLink" id="AnalysisLink">Analysis</div>
- -->			<div class="sidebarLink" onclick="api.logout()">Log Out</div>
-
-
-			<div id="admin_links" style="display: none">
-				<br /><br /><b style="color: #777">ADMIN</b>
-				<div class="sidebarLink active"  id="UserListLink" onclick="ViewController.loadView('UserList')">Users</div>
-				<div class="sidebarLink" id="HousesListLink" onclick="ViewController.loadView('HouseList')">Houses</div>
-			<!-- 	<div class="sidebarLink" id="AllResidentsListLink" onclick="ViewController.loadView('AllResidentsList')">All Residents</div>
-			 	<div class="sidebarLink" id="AllUsersListLink" onclick="ViewController.loadView('AllExamList')">All Exams</div>
-			 -->
-			</div>
-			
-
-		</div>
+</style>
 
 
 		<!-- MAIN CONTENT -->
 		<div id="mainBuffer">
 
 			<div id="mainContent" class="card">
-			
-				<div id="mainHeader">
-					<div id="mainHeaderText">Header Text</div>
-					<div id="mainHeaderRight">RIGHT</div>
-				</div>
-				
-				<div id="mainBody"></div>		
+					
 
 		    </div>
 
@@ -113,11 +80,8 @@
 
 
 		<!-- THEN LOAD THE APP, and awwayyy we gooo! -->
-		<script src="client/app/data.js"></script>
-		<script src="client/app/models.js"></script>
-		<script src="client/app/templates.js"></script>
-		<script src="client/app/controller.js"></script>
-		<script src="client/app/blast.js"></script>
+		<script src="client/app/data.js"></script> <!-- HAS TEST FORMAT -->
+		<script src="client/app/simple.js"></script>
 
 	</body>
 </html>

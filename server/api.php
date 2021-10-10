@@ -4,18 +4,30 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 date_default_timezone_set('America/New_York');
 
-
+function handleError($message){
+	$response = array(
+		"status" => "error",
+		"message" => $message
+	);
+	exit(json_encode($response));
+}
 
 	// LOAD MODELS
-	require_once('config.php');
-
+	require_once('../../config.php');
 	require_once("php_crud.php");
-	require_once("model_rctracker.php");
-	require_once("model_user.php");
-	require_once("model_sendgrid.php");
+	require_once("emails/client_sendgrid.php");
+	require_once("controllers/controller__root.php");
+	require_once("models/model__root.php");
+	
+
+	// DEFINE GLOBAL STATICS - MIGHT AS WELL DO IT HERE
+	
+	// DB - MAKING THIS GLOBAL AVOIDS RECONNECTING TO SQL A MILLION TIMES
+	$db = new Database();
+	$db -> connect();
 
 
-	// CREATE GLOBAL EMAIL CLIENT - MIGHT AS WELL DO IT HERE
+	// GLOBAL EMAIL CLIENT
 	global $sendgridClient;
 	$sendgrid_config = array(
 		'access_token' => SENDGRID_ACCESSTOKEN,
@@ -40,71 +52,54 @@ date_default_timezone_set('America/New_York');
 		echo "No method specified.";
 		exit();
 	}
-	$method = $req -> method;
+	$tmp = explode("_", $req -> method);
+	//if(count($tmp) != 2) $errorHandler -> handleError('Bad Method: ' . $method);
+
+
+	// LOAD CONTROLLER
+	$controllerName = $tmp[0];
+	$controller = ControllerFactory($controllerName);
+
+
+	// METHOD
+	$method = $tmp[1];
+	if(!method_exists ($controller, $method)) {
+		handleError($controllerName . " model does not support the method: " . $method);
+	}
 
 
 	// AUTHENTICATION
-	// ToDo
-	// Should run here, every time web hook is hit.
-	global $userModel;
-	$userModel = new UserModel();
+	global $app_user;
+	$app_user = new User();
+	$controller -> user = $app_user;
 
-	// HANDLE NO ACCESS TOKEN (NOT LOGGED IN)
-	if(!isset($req -> access_token)) {
-		$userModel -> logged_in = false;
-		if($method != "user_login" && $method != "sendReminder") exit("No access token. We both know you shouldn't be here.");
+	if($controllerName != 'public'){
+
+		if(!isset($req -> access_token))
+			exit("No access token. We both know you shouldn't be here.");
+
+		$app_user -> loadByField(array("access_token" => $req -> access_token));
+		$app_user -> loadHouses();
 	}
 
-	// VALIDATE ACCESS TOKEN / LOAD USER
-	else {
-		$user = $userModel -> loadUser($req -> access_token);
 
-		// HANDLE BAD ACCESS TOKEN
-		if(!$user) {
-			echo json_encode(array("status" => "error", "message" => "Bad access token."), JSON_PRETTY_PRINT);
-			exit();
-		}
-
-		$userModel -> active_user = $user;
-	}
-	
-
-
-	
-
-
-	// INSTANTIATE MODEL (if it starts, user_... open user model) AND SEE IF IT SUPPORTS REQUESTED METHOD
-	if(explode("_", $method)[0] == "user"){
-		$model = $userModel;
-		$modelName = 'User Model';
-		$method = explode("_", $method)[1];
-	} 
-	else {
-		$model = new RCTrackerModel();
-		$modelName = 'RC Model';
-		$model -> user = $user;
-	}
-
-	if($method[0] == '_') exit("BAD METHOD - STOP TRYING TO HACK ME.");
-	
-	if(!method_exists ($model, $method)) {
-		echo $modelName . " does not support the method: " . $method;
-		exit();
-	}
-
+	// CALL METHOD
 	$payload 	= (isset($req -> payload)) ? $req -> payload : false;
-	$response 	= $model -> $method($payload);
+	$apiResponse = array(
+		'payload'	=> $controller -> $method($payload),
+		'status' 	=> 'success'
+	);
+
 
 	if(isset($req -> initial_request) && $req -> initial_request && $req -> access_token != '' ){
-		$response = array(
-			"user" => $user,
-			"response" => $response
-		);
+		$apiResponse['user'] = $app_user -> export();
 	}
 
+
+	// Maybe some status information about the api call could be appended here, like runtime?
 
 
 	// PERFORM REQUESTED ACTION AND PRINT RESPONSE (JSON-ENCODED)
-	echo json_encode($response, JSON_PRETTY_PRINT);	
+	echo json_encode($apiResponse, JSON_PRETTY_PRINT);	
 
 

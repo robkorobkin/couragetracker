@@ -124,18 +124,14 @@ class Resident {
 
 
 			if(this.acesScore && this.acesScore != ''){
-				let e = JSON.parse(this.acesScore);
-				e.answers = JSON.stringify(e.answers); // hack - normal exams store answer array in sql as string
-				this.acesExam = new Exam(aces_assessmentJSON, e);
+				this.acesExam = new Exam(aces_assessmentJSON, this.acesScore);
 				this.acesExam.resident = this;
 				this.acesScoreVal = this.acesExam.totalScore;
 			}
 			else this.acesScoreVal = '';
 
 			if(this.harmScore != ''){
-				let e = JSON.parse(this.harmScore);
-				e.answers = JSON.stringify(e.answers); // hack - normal exams store answer array in sql as string
-				this.harmExam = new Exam(harm_assessmentJSON, e);
+				this.harmExam = new Exam(harm_assessmentJSON, this.harmScore);
 				this.harmExam.resident = this;
 				this.harmScoreVal = this.harmExam.totalScore;
 			}
@@ -179,8 +175,8 @@ class Resident {
 			date_taken  : exam.date_taken,
 			answers 	: exam.answers	
 		}
-		if(exam.examTemplate.version == 2) this.acesScore = JSON.stringify(personalScore);
-		if(exam.examTemplate.version == 3) this.harmScore = JSON.stringify(personalScore);
+		if(exam.examTemplate.version == 2) this.acesScore = personalScore;
+		if(exam.examTemplate.version == 3) this.harmScore = personalScore;
 
 		this.save(callbackFunction);
 	}
@@ -204,7 +200,7 @@ class ResidentList extends BaseList {
 	}
 
 	loadData(residentData){
-		this.mainList = [];
+		this.mainList = [];	
 		for(var rJSON of residentData){
 			this.mainList.push(new Resident(rJSON));
 		}
@@ -234,7 +230,12 @@ class ResidentList extends BaseList {
 	getResidentByResidentId (residentId, callbackFunction){
 		this.open_resident = residentId;
 		var self = this;
-		if(residentId == -1) callbackFunction(new Resident());
+
+		console.log('about to call api')
+
+		if(residentId == -1) {
+			callbackFunction(new Resident());
+		}
 		else {
 			api.callApi('getFullResidentById', parseInt(residentId), function(resident){
 				var r = new Resident(resident);
@@ -310,7 +311,7 @@ class Exam {
 				}
 			}
 
-			this.answers = JSON.parse(exam.answers);
+			this.answers = exam.answers;
 			this.processExamResults();
 			this.date_taken_label = formatDateForOutput(exam.date_taken)
 			
@@ -631,8 +632,10 @@ api = {
 
 	callApi : function(method, payload, callbackFunction){
 
+		let prefix = "admin_";
+
 		var req = {
-			method: method,
+			method: prefix + method,
 			payload: payload,
 			initial_request : this.initial_request
 		}
@@ -647,13 +650,13 @@ api = {
 
 
 		let apiCallBack = function(response){
+
 			if('user' in response) {
 				ViewModel.user = response.user;
 				
 				 // method appended from controller 
 				api.loadUser(response.user);
 
-				response = response.response;
 			}
 
 
@@ -662,7 +665,7 @@ api = {
 				return;	
 			}
 
-			callbackFunction(response);
+			callbackFunction(response.payload);
 		}
 
 		$.ajax({

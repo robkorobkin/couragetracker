@@ -4,7 +4,7 @@
 
 		function __construct($sendgrid_config){
 
-			$this -> dev = false; // VERBOSE
+			$this -> dev = true; // VERBOSE
 
 
 			// EXTRACT CONFIG
@@ -106,8 +106,23 @@
 			curl_setopt( $session, CURLOPT_POSTFIELDS, json_encode($this -> request) );
 
 
+
+
 			// CALL AND CLOSE
 			$response = curl_exec($session);
+			
+			print_r(curl_getinfo($session));
+
+			// if (!curl_errno($ch)) {
+			// 	$info = curl_getinfo($ch);
+			// 	echo 'Took ', $info['total_time'], ' seconds to send a request to ', $info['url'], "\n";
+			// }
+
+
+			exit("curl executed: " . curl_error($session));
+			echo $response;
+
+
 			if($response === false) {
 				$this -> error_message = 'Curl error: ' . curl_error($session);
 				return false;
@@ -134,12 +149,31 @@
 
 		function loadAndSendEmail($email_parameters){
 
+
+			// $email_parameters = array(
+			// 	'recipient' => $newUser['email'],
+			// 	'subject' => 'Welcome to RC Tracker!',
+			// 	'template' => 'registration.html',
+			// 	'madlibs' => array(
+			// 		"first_name" => $newUser['first_name'],
+			// 		"confirm_email_url" => APP_URL . "/index.php?v=confirm_email&access_token=" . $newUser['access_token']
+			// 	)
+			// );
+
+			// $this -> sendgridClient -> loadAndSendEmail($email_parameters);
+
+			// if(!$sendgridClient -> ){
+			// 	$error_message = $sendgridClient -> error_message;
+			// 	exit($error_message);
+			// }
+
+
+
 			// EXTRACT CONFIG
-			$email_fields = array('recipient', 'subject', 'body');
+			$email_fields = array('recipient', 'subject', 'template', 'madlibs');
 			foreach($email_fields as $field){
 				if(!isset($email_parameters[$field])) {
-					$this -> error_message = 'Tried to send email without: ' . $field;
-					return false;
+					handleError('Tried to send email without: ' . $field);
 				}
 			}
 			extract($email_parameters);
@@ -147,13 +181,28 @@
 
 
 			// LOAD EMAIL
-			if(!$this -> setRecipient($recipient)) return false;
-			if(!$this -> setSubject($subject)) return false;
-			if(!$this -> setMessageContent($body)) return false;
+			if(!$this -> setRecipient($recipient)) handleError("Unable to set recipient: " . $recipient);
+			if(!$this -> setSubject($subject))  handleError("Unable to set subject:" . $subject);
+
+
+
+			// GENERATE TEMPLATE
+			$templateHTML = file_get_contents('emails/' . $template);	
+			if(!$templateHTML) handleError('Email template not found: ' . $template);
+			foreach($madlibs as $k => $v){
+				$keys[] = '{{' . $k . '}}';
+				$values[] = $v;
+			}
+			$body = str_replace($keys, $values, $templateHTML);
+			if(!$this -> setMessageContent($body))  handleError("Unable to set body:" . $subject);
+
 
 
 			// SEND EMAIL
-			if(!$this -> sendEmail()) return false;
+			if(!$this -> sendEmail()) {
+				$error_message = 'ERROR';
+				handleError("Failed to send email:" . $error_message);
+			}
 			
 			return true;
 		}
