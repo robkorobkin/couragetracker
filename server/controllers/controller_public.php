@@ -28,19 +28,24 @@
 			$newUser = new User();
 			$newUser -> setContentFromHash($userJSON);
 			$newUser -> insert();
-			$newUser -> sendWelcomeEmail();
-			return array("status" => "success");
+			$url = $newUser -> sendWelcomeEmail();
+			return $url;
 		}
 
 
 		// REQUESTS AN EMAIL WITH A RESET LINK BE SENT TO SPECIFIED EMAIL
 		function sendReminder($email){
+			global $api_response;
 			
 			$user = new User();
 			$user -> loadByField(array("email" => $email));
 			$user -> refreshToken();
 			
-			
+
+			$reset_url = APP_URL . "/index.php?v=reset_pw&access_token=" . $user -> access_token;
+			$api_response['reset_url'] = $reset_url;
+
+
 			// SEND EMAIL TO RESET PASSWORD
 			$email_parameters = array(
 				'recipient' => $user -> email,
@@ -48,14 +53,14 @@
 				'template' 	=> 'reset_pw.html',
 				'madlibs' 	=> array(
 					"first_name" => $user -> first_name,
-					"reset_password_url" => APP_URL . "/index.php?v=reset_pw&access_token=" . $user -> access_token
+					"reset_password_url" => $reset_url
 				)
 			);
 			$this -> sendgridClient -> loadAndSendEmail($email_parameters);
 			
 
 			return array(
-				"status" => "success",
+				"URL" => $reset_url,
 			);
 		}
 	}

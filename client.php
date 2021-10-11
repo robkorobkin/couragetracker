@@ -57,17 +57,17 @@
 
 		<!-- SIDEBAR -->
 		<div id="sidebar" class="card">
-			<div class="sidebarLink active" onclick="ViewController.loadView('ResidentList')" id="ResidentListLink">Residents</div>
-			<div class="sidebarLink" onclick="ViewController.loadView('ExamList')" id="ExamListLink">Questionnaires</div>
-			<div class="sidebarLink" onclick="ViewController.loadView('BlastList')" id="BlastListLink">Blasts</div>
+			<div class="sidebarLink active" onclick="rootController.loadComponent('Residents')" id="ResidentsLink">Residents</div>
+			<div class="sidebarLink" onclick="rootController.loadComponent('Exams')" id="ExamsLink">Questionnaires</div>
+			<div class="sidebarLink" onclick="rootController.loadComponent('Blasts')" id="BlastsLink">Blasts</div>
 <!-- 			<div class="sidebarLink" id="AnalysisLink">Analysis</div>
  -->			<div class="sidebarLink" onclick="api.logout()">Log Out</div>
 
 
-			<div id="admin_links" style="display: none">
+			<div id="super_links" style="display: none">
 				<br /><br /><b style="color: #777">ADMIN</b>
-				<div class="sidebarLink active"  id="UserListLink" onclick="ViewController.loadView('UserList')">Users</div>
-				<div class="sidebarLink" id="HousesListLink" onclick="ViewController.loadView('HouseList')">Houses</div>
+				<div class="sidebarLink active"  id="UserListLink" onclick="rootController.loadComponent('Users')">Users</div>
+				<div class="sidebarLink" id="HousesListLink" onclick="rootController.loadComponent('Houses')">Houses</div>
 			<!-- 	<div class="sidebarLink" id="AllResidentsListLink" onclick="ViewController.loadView('AllResidentsList')">All Residents</div>
 			 	<div class="sidebarLink" id="AllUsersListLink" onclick="ViewController.loadView('AllExamList')">All Exams</div>
 			 -->
@@ -84,7 +84,7 @@
 			
 				<div id="mainHeader">
 					<div id="mainHeaderText">Header Text</div>
-					<div id="mainHeaderRight">RIGHT</div>
+					
 				</div>
 				
 				<div id="mainBody"></div>		
@@ -116,8 +116,8 @@
 		<script src="client/app/data.js"></script>
 		<script src="client/app/models.js"></script>
 		<script src="client/app/templates.js"></script>
-		<script src="client/app/controller.js"></script>
-		<script src="client/app/blast.js"></script>
+		<script src="client/js_loader.php" type="application/javascript"></script>
+		<!-- <script src="client/app/blast.js"></script> -->
 
 	</body>
 </html>

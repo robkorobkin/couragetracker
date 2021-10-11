@@ -22,10 +22,36 @@
 // 		* 	- fetchUserById - gets full user, endpoint wrapper on _getFullUser
 
 
-	Class SuperController extends CT_Controller {
+	Class Super_Controller extends CT_Controller {
 	
 		function __construct(){	
 			parent::__construct();
+		}
+
+
+		function fetchSelection($query){
+
+			if(!isset($query -> component) || !in_array($query -> component, array('Houses')))
+				handleError('Component not ok: ' . $query -> component);
+
+
+			switch($query -> component){
+
+				case 'Houses' :
+					$house = new House();
+					return $house -> select($query -> select) -> export();
+
+
+			}
+
+		}
+
+
+
+
+		function fetchHousesList(){
+			$houselist = new HouseList();
+			return $houselist -> getHouseListForSignUp(); // just gets entire table, same as sign up
 		}
 
 
@@ -46,14 +72,6 @@
 			return $users;
 		}
 
-		function fetchUserByUserId($userId){
-			if(!$userId || !is_int(intval($userId))) return $this -> _handleError("No user id submitted.");
-			if($this -> user['status'] != 'admin') return $this -> _handleError("You don't have admin access. Can't load.");
-
-			$user = $this -> _getFullUserByUserId($userId);
-			$user['password'] = '';
-			return $user;
-		}
 
 		function deactivateUser($userId){
 
@@ -174,6 +192,20 @@
 			else $this -> _handleError("Can't return type: " . $payload -> return_type);		
 		}
 		
+
+
+
+
+		function updateMembers($payload){
+			//print_r($payload); exit();
+			if(!isset($payload -> houseId)) handleError('No House Id');
+			if(!isset($payload -> permissions)) handleError('No permissions list');
+			$house = new House();
+			return $house -> select(array('houseId' => $payload -> houseId)) -> updateMembers($payload -> permissions) -> export();
+		}
+
+
+
 
 		/**********************************
 		*	API ENDPOINTS

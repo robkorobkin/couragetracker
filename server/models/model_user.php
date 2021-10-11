@@ -10,6 +10,7 @@
 
 			parent::__construct();
 
+			$this -> tableName = 'users';
 			$this -> primary_key = 'userId';
 			$this -> userId	= 0;
 
@@ -41,7 +42,10 @@
 			$this -> last_name = '';
 			
 
-			$this -> current_house = false;
+			$this -> search_fields = array("email", "access_token", "userId");
+
+
+			$this -> current_house = new House();
 			$this -> houses = false; //HouseList();
 
 		} 
@@ -76,34 +80,10 @@
 		}
 		
 
-		function loadByField($key_value){
+		function select($key_value){
 
-			// VALIDATE PAYLOAD
-			if(!$key_value || !is_array($key_value)) 
-				$this -> _handleError("Please provide a key value pair.");
+			parent::select($key_value);
 
-
-			// ARE WE SEARCHING BY A LEGAL FIELD?
-			$f = array_key_first($key_value);
-			$v = $this -> db -> escapeString($key_value[$f]);
-			if(!in_array($f, array("email", "access_token", "userId"))) 
-				$this -> _handleError("You're not currently allowed to search by: " . $f);
-
-			if($f == 'email' && !(filter_var($v, FILTER_VALIDATE_EMAIL))) {
-				$this -> _handleError("Not a valid email.");
-			}
-
-			// CHECK FOR ILLEGAL CHARS?
-
-
-			// QUERY DATABASE FOR USER
-			$config['where'] = $f . '="' . $v . '"';
-			$this -> db -> select("users", $config);
-			$response = $this -> db -> getResponse();
-			if(count($response) == 0) 
-				$this -> _handleError("No user found.");
-			$db_row = $response[0];
-			$this -> loadFromRow($db_row);
 
 			if($this -> status == 'locked out')  
 				$this -> _handleError("It appears your account has been locked out.");
@@ -112,19 +92,15 @@
 			// LOAD CURRENT HOUSE?
 			if($this -> current_houseId != 0){
 
+				
 				// GET HOUSE
-				$sql = 'SELECT * from houses where houseId=' . $this -> current_houseId;
-				$this -> db -> sql($sql);
-				$response = $this -> db -> getResponse();
-				if(count($response) == 0) $this -> _handleError("House not found - #" . $this -> current_houseId);
-				$house = $response[0];
-				$this -> current_house = $house;
+				$this -> current_house -> select(array('houseId' => $this -> current_houseId));
+
 
 				// MAKE SURE USER STILL HAS PERMISSION
 				if($this -> status != 'super'){
 					$sql = 'SELECT status from usershouses where userId=' . $this -> userId . ' AND houseId=' . $house['houseId'];
-					$this -> db -> sql($sql);
-					$response = $this -> db -> getResponse();
+					$response = $this -> db -> sql($sql) -> getRow();
 
 					// FOR NOW - JUST MAKE SURE THERE'S SOMETHING IN THE PERMISSIONS TABLE
 					if(count($response) == 0) {
@@ -134,7 +110,8 @@
 					}
 				}
 			}
-			
+
+			return $this;
 
 		}
 
@@ -184,10 +161,13 @@
 
 
 			// EVERYBODY ELSE IS BOUND BY THEIR PERMISSIONS 
-			$sql = 'SELECT h.*, u.status from houses h, usershouses u where u.userId=' . $this -> userId . ' AND u.houseId=h.houseId';
+			$sql = 	'SELECT h.*, u.status from houses h, usershouses u ' . 
+					'where u.userId=' . $this -> userId . ' AND u.houseId=h.houseId';
+
 			$this -> db -> sql($sql);
 			$this -> houses = $this -> db -> getResponse();
 
+			if($this -> status != 'active') return;
 
 
 			// IF NO CURRENT HOUSE, BUT PERMISSIONS, SET TOP HOUSE AS CURRENT
@@ -230,10 +210,13 @@
 
 
 		
-		function confirmEmail(){
-			$sql = "UPDATE users set status='confirmed' where  userId=" . $this -> userId; 
+		function toggleStatus($status){
+			if(!in_array($status, array('raw', 'confirmed', 'active', 'super'))) 
+				handleError('Bad user status: ' . $status);
+			$sql = "UPDATE users set status='" . $status . "' where  userId=" . $this -> userId; 
 			$this->db->sql($sql);
 		}
+
 
 		function refreshToken(){
 			$access_token = $this -> _generateKey();
@@ -277,16 +260,23 @@
 		}
 
 		function sendWelcomeEmail(){
+			global $sendgridClient, $api_response;
+
+			$confirm_email_url = APP_URL . "/index.php?v=confirm_email&access_token=" . $this -> access_token;
+			$api_response['url'] = $confirm_email_url;
+
 			$email_parameters = array(
 				'recipient' => $this -> email,
 				'subject' 	=> 'Welcome to RC Tracker!',
 				'template' 	=> 'registration.html',
 				'madlibs' 	=> array(
 					"first_name" => $this -> first_name,
-					"confirm_email_url" => APP_URL . "/index.php?v=confirm_email&access_token=" . $this -> access_token
+					"confirm_email_url" => $confirm_email_url
 				)
 			);
-			$this -> sendgridClient -> loadAndSendEmail($email_parameters);
+			$sendgridClient -> loadAndSendEmail($email_parameters);
+
+			return $confirm_email_url;
 		}
 
 	}		

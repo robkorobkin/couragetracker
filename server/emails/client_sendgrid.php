@@ -4,17 +4,17 @@
 
 		function __construct($sendgrid_config){
 
-			$this -> dev = true; // VERBOSE
+			$this -> dev = false; // VERBOSE
 
 
 			// EXTRACT CONFIG
 			$config_parameters = array('access_token', 'from_email');
 			foreach($config_parameters as $field){
-				if(!isset($sendgrid_config[$field])) exit('Tried to load SendGridClient without: ' . $field);
+				if(!isset($sendgrid_config[$field])) handleError('Tried to load SendGridClient without: ' . $field);
 			}
 			extract($sendgrid_config);
 			if (!(filter_var($from_email, FILTER_VALIDATE_EMAIL))) {
-				exit('Tried to load SendGridClient with invalid from_email: ' . $from_email);
+				handleError('Tried to load SendGridClient with invalid from_email: ' . $from_email);
 			}
 
 
@@ -111,16 +111,10 @@
 			// CALL AND CLOSE
 			$response = curl_exec($session);
 			
-			print_r(curl_getinfo($session));
-
 			// if (!curl_errno($ch)) {
 			// 	$info = curl_getinfo($ch);
 			// 	echo 'Took ', $info['total_time'], ' seconds to send a request to ', $info['url'], "\n";
 			// }
-
-
-			exit("curl executed: " . curl_error($session));
-			echo $response;
 
 
 			if($response === false) {
@@ -132,18 +126,18 @@
 
 			// // DEV: print everything out
 			if($this -> dev) {
-				print_r($response);
 				print_r($response_message);
 			}
 
 
 			// FINAL VALIDATION
 			if(isset($response_message['errors'])){
-				$this -> error_message = $response_message['errors'][0]['message'];
-				return false;
+				$error_message = $response_message['errors'][0]['message'];
+				handleError($error_message);
 
 			}
-			else return true;
+			
+			return true;
 		}
 
 

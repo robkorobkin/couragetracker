@@ -12,8 +12,9 @@
 	Class CT_Model {
 
 		function __construct(){	
-			global $db;
+			global $db, $app_user;
 			$this -> db = $db;
+			$this -> user = $app_user;
 
 			$this -> json_fields = array();
 		}
@@ -60,19 +61,17 @@
 			foreach($this -> json_fields as $f) $row[$f . 'JSON'] = json_encode($this -> $f);
 			return $row;
 		}
+
+
 		function loadFromRow($row){
-
-			foreach($this -> content_fields as $f) $this -> $f = $row[$f];
-
-			foreach($this -> meta_fields as $f) {
-				$this -> $f = $row[$f];
-			}
-			
-
+			foreach($this -> content_fields as $f) 	$this -> $f = $row[$f];
+			foreach($this -> meta_fields as $f) 	$this -> $f = $row[$f];
 			$pk = $this -> primary_key;
-			$this -> $pk = $row[$pk];
+			$this -> $pk = (int) $row[$pk];
 			return $row;
 		}
+
+
 		function setContentFromHash($hash){
 			foreach($this -> content_fields as $f){
 				if(!isset($hash -> $f)) $this -> handleError("Payload does not include the field: " . $f);
@@ -85,12 +84,49 @@
 		}
 
 
+
+		function select($key_value){
+
+			$key_value = (array) $key_value; // api might pass it in as an object
+
+
+			// VALIDATE PAYLOAD
+			if(!$key_value || !is_array($key_value)) 
+				$this -> _handleError("Please provide a key value pair.");
+
+			$f = array_key_first($key_value);
+			$v = $this -> db -> escapeString($key_value[$f]);
+
+
+			// ARE WE SEARCHING BY A LEGAL FIELD?
+			if(!in_array($f, $this -> search_fields)) 
+				handleError("You're not currently allowed to search by: " . $f);
+
+			if($f == 'email' && !(filter_var($v, FILTER_VALIDATE_EMAIL))) {
+				handleError("Not a valid email.");
+			}
+
+
+			// MAKE SELECTION
+			$sql = 'SELECT * from ' . $this -> tableName . ' where ' . $f . '="' . $v . '"';
+			$this -> db -> sql($sql);
+			$response = $this -> db -> getResponse();
+			if(count($response) == 0) 
+				handleError("Row not found.");
+			$db_row = $response[0];
+			$this -> loadFromRow($db_row);
+
+
+
+			return $this;
+		}
 	}
 
 
 	// INCLUDE CHILD CLASSES
 	require_once('model_exam.php');
 	require_once('model_house.php');
+	require_once('model_houselist.php');
 	require_once('model_resident.php');
 	require_once('model_residentlist.php');
 	require_once('model_user.php');

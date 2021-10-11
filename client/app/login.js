@@ -5,9 +5,7 @@ appConfig = {
 
 
 ViewModel = {
-	user : {
-		userid : 23
-	},
+	user : false,
 	requestedHouse : false
 }
 
@@ -99,7 +97,7 @@ $(function(){
 
 	if(mode == "reset_pw"){
 
-		api.callApi('admin_login', access_token, (response) => {
+		api.callApi('login_confirmAccessToken', access_token, (response) => {
 
 			if("status" in response && response.status == "error"){
 				$('#resetpw_form').html(escapeForScreen(response.message)).show();
@@ -112,17 +110,28 @@ $(function(){
 
 	if(mode == "pickhouse"){
 
-		api.callApi('public_fetchHouseList', access_token, (response) => {
+		api.callApi('login_fetchHouseList', access_token, (house_list) => {
 
-			if("status" in response && response.status == "error"){
-				$('#load_error').show();
-				return;
-			}
-
-			ViewModel.house_list = response;
+			ViewModel.house_list = house_list;
 			for(let house of ViewModel.house_list){
 				house.display = true;
 			}
+
+
+			console.log(ViewModel.user);
+
+			let statusHTML = '';
+			for(let h of ViewModel.user.houses) {
+				if(h.status == 'requested')
+					statusHTML += h.housename + '<br />';
+			}
+			if(statusHTML != ''){
+				statusHTML = 	'<b>We are currently processing your request to join:</b><br />' + 
+								statusHTML +
+								'<br />In the mean time, you may also register a new program or request access to an additional program.';
+				$('#request_status').html(statusHTML).show();
+			}
+
 
 
 			$('#houserequest_form').show();
@@ -173,27 +182,16 @@ LOGIN USER
 		// HANDLE LOGIN
 		if(green_light){
 
-			api.callApi("admin_login", login_request, function(response){
+			api.callApi("public_login", login_request, function(user){
 
-				if(!("status" in response)){
-					console.log('API is being weird.');
-					return;
-				}
-				if(response.status == "error"){
-					$('#login_errorbox').html(escapeForScreen(response.message)).show();
-					return;
-				}
-
-
-				let user = response.payload;
-
+				
 				// SAVE USER OBJECT IN COOKIE
 
 				localStorage.access_token = user.access_token;
 				localStorage.userJSON = JSON.stringify(user);
 
 				// if user has an active account, just bring them into the app
-				if(user.status == "active" || user.status == "admin"){
+				if(user.status == "admin" || user.status == 'super'){
 					window.location = "client.php";
 				}
 
@@ -270,7 +268,7 @@ REGISTER USER
 
 		// CALL API
 		if(green_light){
-			api.callApi("user_createUser", user, function(response){
+			api.callApi("public_createUser", user, function(response){
 				if(!('status' in response)){
 					console.log('Something weird with the API!'); return;
 				}
@@ -423,15 +421,10 @@ RESET PASSWORD
 
 		$('#requestaccess_button').click(function(){
 			
-			let req = ViewModel.requestedHouse.houseId;
+			let req = parseInt(ViewModel.requestedHouse.houseId);
 			
-			api.callApi('login_requestHouseAssignment', req, function(response){
-				if(response.status == "error"){
-					$('#request_errorbox').html(escapeForScreen(response.message)).show();
-				}
-				else if(response.status == "success"){
-					$('#houseselect_form').html("You're request has been submitted. Please give us some time to review it and get back to you.");
-				}
+			api.callApi('login_requestHouseAssignment', req, function(){
+				$('#houseselect_form').html("You're request has been submitted. Please give us some time to review it and get back to you.");
 			});
 		})
 
@@ -479,13 +472,8 @@ RESET PASSWORD
 
 		if(green_light){
 			api.callApi('login_createHouse', house, function(response){
-				if(response.status == "error"){
-					$('#register_errorbox').html(response.message);
-				}
-				else if(response.status == "success"){
-					$('#houseregister_form').hide();
-					$('#register_confirm').show();
-				}
+				$('#houseregister_form').hide();
+				$('#register_confirm').show();
 			})
 
 		}
@@ -522,11 +510,29 @@ api = {
 		$.ajax({
 			
 			success: function(response){
+				
+
+				if(!("status" in response)){
+					console.log('API is being weird.');
+					return;
+				}
+				if(response.status == "error"){
+					$('#login_errorbox').html(escapeForScreen(response.message)).show();
+					$('#load_error').show();
+					return;
+				}
+				if(response.status != 'success'){
+					console.log(response);
+				}
+
 				if('user' in response) {
 					ViewModel.user = response.user;
-					response = response.response;
 				}
-				callbackFunction(response);
+
+				if(response.status == 'success'){
+					callbackFunction(response.payload);	
+				}
+				
 			},
 
 			type: 'POST',

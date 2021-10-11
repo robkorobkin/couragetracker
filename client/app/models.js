@@ -632,10 +632,10 @@ api = {
 
 	callApi : function(method, payload, callbackFunction){
 
-		let prefix = "admin_";
+		if(method.split('_').length != 2) method = "admin_" + method;
 
 		var req = {
-			method: prefix + method,
+			method: method,
 			payload: payload,
 			initial_request : this.initial_request
 		}

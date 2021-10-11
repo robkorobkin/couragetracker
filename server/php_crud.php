@@ -185,7 +185,7 @@ class Database{
             else {
                 $this->numRows = 0;
             }
-            return true;
+            return $this;
         }else{
             $this->error();
         }
@@ -358,8 +358,25 @@ class Database{
     public function getResponse(){
         $val = $this->response;
         $this->response = array();
+        if(count($val) == 0) {
+            $this -> conn -> error = 'No Data Returned: ' . $this->getQuery;
+            $this -> error();
+        }
         return $val;
     }
+
+    public function getRow($failGracefully){
+        $val = $this->response;
+        $this->response = array();
+        if(count($val) == 0) {
+
+            if($failGracefully) return false;
+
+            $this -> conn -> error = 'No Data Returned: ' . $this->getQuery;
+            $this -> error();
+        }
+        return $val[0];
+    }    
 
     /*
      * SQL debug
@@ -390,7 +407,12 @@ class Database{
      * Error
      */
     public function error(){
-        exit($this->conn->error);
-        return false;
+        handleError($this->conn->error . ' -- ' . $this -> getQuery);
+    }
+
+    public function verbose(){
+        global $api_response;       
+        $api_response['sql'] = $this -> getQuery;
+
     }
 }

@@ -637,11 +637,11 @@ TemplateLoader = {
 							'<tr class="headerRow">' +
 								'<th id="control-houseId">ID</th>' +
 								'<th id="control-housename">Name</th>' +
-								'<th id="control-housename">Street</th>' +
+								'<th id="control-street">Street</th>' +
 								'<th id="control-city">City</th>' +
 								'<th id="control-state">State</th>' +
 							'</tr>' +
-							'<tbody class="mainTable" id="housesTable">' +
+							'<tbody class="mainTable" id="contentTable">' +
 							'</tbody>' +
 						'</table>' +
 					'</div>';
@@ -667,18 +667,18 @@ TemplateLoader = {
 		return html;
 	},
 
-	writeHouseMainHTML : function(house, userList){
+	writeHouseMainHTML : function(house){
 
 		let html = 
 			
-			'<form id="house_edit_frame">' +
+			'<form id="objectform">' +
 
 				 	// NAME INPUTS
-				 	this.writeField('house_housename', 'House name') +
-				 	this.writeField('house_street', 'Street') +
-				 	this.writeField('house_city', 'City') +
-				 	this.writeField('house_state', 'State') +
-				 	this.writeField('house_zip', 'Zip');
+				 	this.writeField('housename', 'House name') +
+				 	this.writeField('street', 'Street') +
+				 	this.writeField('city', 'City') +
+				 	this.writeField('state', 'State') +
+				 	this.writeField('zip', 'Zip');
 
 
 		if(house.isNew) {
@@ -713,29 +713,40 @@ TemplateLoader = {
 			'</div>' +
 			'<br /><br /><br />' +
 			'<div class="info-panel">' +
-				'<b>USERS FOR HOUSE:</b>';
 
-//				console.log(house)
+				'<h3>UPDATE MEMBERS</h3><br /><br />' +
 
-				for(let user of house.userList){
-					console.log(house)
-					html += '<br />' + user.first_name + ' ' + user.last_name + 
-						' - <a id="removeacess_' + user.userId + '" class="remove_link">Remove Access</a>';
+				// REQUESTS TO JOIN
+				'<b>REQUESTS TO JOIN:</b><br />';
+				for(let user of house.userList.requested){
+					html += '<input type="checkbox" class="requestbox" id="requested_' + user.userId + '" />&nbsp;&nbsp;' +
+							'<label for="requested_' + user.userId + '">' + user.first_name + ' ' + user.last_name + '</label>' +
+							'<br />';	
 				}
+
+
+				// ACTIVE USERS
+				html += '<br /><br /><br /><b>ACTIVE MEMBERS:</b><br />';
+				for(let user of house.userList.active){
+					html += '<input type="checkbox" class="activebox" id="active_' + user.userId + '" />&nbsp;&nbsp;' +
+							'<label for="active_' + user.userId + '">' + user.first_name + ' ' + user.last_name + '</label>' +
+							'<br />';	
+				}
+
 				
-				html +=
+				html += '<br /><br /><br /><b>ADD USERS:</b><br />' +
 				'<div class="form-group">' +
 					'<label class="bmd-label-floating" for="adduser_selector">Add User</label>' +
-					'<select id="adduser_selector" class="form-control">';
-
-						for(let user of userList.mainList){
-							if(user.status == 'admin') continue;
+					'<select id="adduser_selector" class="form-control">' +
+						'<option value="">Select...</option>';
+						for(let user of house.userList.potential){
 							html += '<option value="' + user.userId + '">' + user.first_name + ' ' + user.last_name + '</option>';
 						}
-
 		html +=		'</select>' +
+
+					'<br /><br /><br /><button id="updatemembers_button" type="button" class="btn btn-raised btn-primary">UPDATE MEMBERS</button>'
 				'</div>' +
-				'<button id="adduser_button" type="button" class="btn btn-raised btn-primary">GRANT ACCESS</button>' +
+				
 
 			'</div>' + 
 
@@ -752,12 +763,48 @@ TemplateLoader = {
 		let f = escapeForHtml(fieldName);
 
 		let html = '<div class="form-group">' +
-						'<label for="' + f + '" id="label_' + f + '" class="bmd-label-floating">' + escapeForHtml(label) +'</label>' +
-						'<input type="text" class="form-control" id="' + f + '">' +
+						'<label for="field_' + f + '" id="label_' + f + '" class="bmd-label-floating">' + escapeForHtml(label) +'</label>' +
+						'<input type="text" class="form-control" id="field_' + f + '">' +
 					'</div>';
 
 		return html;
 
+	},
+
+
+	writeListMainHTML : function(config){
+
+		let html = 	'<div id="mainList_view">' +
+						'<table id="mainTable">' +
+							'<thead>' +
+								'<tr class="headerRow">';
+
+
+		$(config).each((i,f) => html+= '<th id="control-' + escapeForHtml(f[0]) + '">' + escapeForHtml(f[1]) + '</th>');
+
+
+		html +=					'</tr>' +
+							'</thead>' +
+							'<tbody>' +
+							'</tbody>' +
+						'</table>' +
+					'</div>';
+
+		return html;
+	},
+
+
+	_writeListTableHTML : function(mainList, config){
+		let html = '';
+		$(mainList).each(function(index, rowObj){
+			if(rowObj.display){
+
+				html += '<tr id="row_' + rowObj[config[0][0]] + '">' + "\n";
+					$(config).each((i,f) => html+= '<td>' + escapeForHtml(rowObj[f[0]]) + '</td>' + "\n");
+				html +=	'</tr>' + "\n" + "\n";
+			}
+		});
+		return html;
 	}
 
 

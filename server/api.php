@@ -1,59 +1,14 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-date_default_timezone_set('America/New_York');
-
-function handleError($message){
-	$response = array(
-		"status" => "error",
-		"message" => $message
-	);
-	exit(json_encode($response));
-}
-
-	// LOAD MODELS
-	require_once('../../config.php');
-	require_once("php_crud.php");
-	require_once("emails/client_sendgrid.php");
-	require_once("controllers/controller__root.php");
-	require_once("models/model__root.php");
 	
-
-	// DEFINE GLOBAL STATICS - MIGHT AS WELL DO IT HERE
-	
-	// DB - MAKING THIS GLOBAL AVOIDS RECONNECTING TO SQL A MILLION TIMES
-	$db = new Database();
-	$db -> connect();
-
-
-	// GLOBAL EMAIL CLIENT
-	global $sendgridClient;
-	$sendgrid_config = array(
-		'access_token' => SENDGRID_ACCESSTOKEN,
-		'from_email' => SENDGRID_FROMEMAIL
-	); 
-	$sendgridClient = new RKSendGrid($sendgrid_config);
-	
-
-
-	// Read the Request
-	$json = file_get_contents('php://input');
-	$req = json_decode($json);	
-	if(!$req) {
-		echo "JSON Decoding Error:\n\n";
-		echo json_last_error_msg();
-		exit();
-	}
+	require_once('ct_load.php');
 
 
 	// LOAD THE METHOD
-	if(!isset($req -> method)) {
-		echo "No method specified.";
-		exit();
+	if(!isset($api_request -> method)) {
+		handleError("No method specified.");
 	}
-	$tmp = explode("_", $req -> method);
-	//if(count($tmp) != 2) $errorHandler -> handleError('Bad Method: ' . $method);
+	$tmp = explode("_", $api_request -> method);
+	if(count($tmp) != 2) handleError('Bad Method: ' . $method);
 
 
 	// LOAD CONTROLLER
@@ -64,7 +19,7 @@ function handleError($message){
 	// METHOD
 	$method = $tmp[1];
 	if(!method_exists ($controller, $method)) {
-		handleError($controllerName . " model does not support the method: " . $method);
+		handleError($controllerName . " controller does not support the method: " . $method);
 	}
 
 
@@ -73,33 +28,24 @@ function handleError($message){
 	$app_user = new User();
 	$controller -> user = $app_user;
 
+	// don't login public methods
 	if($controllerName != 'public'){
 
-		if(!isset($req -> access_token))
-			exit("No access token. We both know you shouldn't be here.");
-
-		$app_user -> loadByField(array("access_token" => $req -> access_token));
+		if(!isset($api_request -> access_token))
+			handleError("No access token. We both know you shouldn't be here.");
+		$app_user -> select(array("access_token" => $api_request -> access_token));
 		$app_user -> loadHouses();
+
+		// on initial load, give user information on themselves
+		if(isset($api_request -> initial_request) && $api_request -> initial_request && $api_request -> access_token != '' ){
+			$api_response['user'] = $app_user -> export();
+		}
 	}
 
 
 	// CALL METHOD
-	$payload 	= (isset($req -> payload)) ? $req -> payload : false;
-	$apiResponse = array(
-		'payload'	=> $controller -> $method($payload),
-		'status' 	=> 'success'
-	);
-
-
-	if(isset($req -> initial_request) && $req -> initial_request && $req -> access_token != '' ){
-		$apiResponse['user'] = $app_user -> export();
-	}
-
-
-	// Maybe some status information about the api call could be appended here, like runtime?
-
-
-	// PERFORM REQUESTED ACTION AND PRINT RESPONSE (JSON-ENCODED)
-	echo json_encode($apiResponse, JSON_PRETTY_PRINT);	
+	$payload = (isset($api_request -> payload)) ? $api_request -> payload : false;
+	$api_response['payload'] = $controller -> $method($payload);
+	echo json_encode($api_response, JSON_PRETTY_PRINT);	
 
 

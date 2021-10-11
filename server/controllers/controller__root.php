@@ -10,7 +10,10 @@
 	function ControllerFactory($controllerName){
 		switch($controllerName){
 			case 'public' 	: return new Public_Controller();
+			case 'login' 	: return new Login_Controller();
 			case 'admin' 	: return new Admin_Controller();
+			case 'super' 	: return new Super_Controller();
+
 		}
 	}
 
@@ -29,11 +32,7 @@
 
 		// HANDLE ERROR - COULD / SHOULD ALSO INCLUDE LOGGING
 		function _handleError($message){
-			$response = array(
-				"status" => "error",
-				"message" => $message
-			);
-			exit(json_encode($response));
+			handleError($message); // could override if necessary?
 		}
 
 

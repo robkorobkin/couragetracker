@@ -11,7 +11,7 @@
 	**********************************/
 
 
-	Class LoginController extends CT_Controller {
+	Class Login_Controller extends CT_Controller {
 	
 		function __construct(){	
 			parent::__construct();
@@ -20,19 +20,40 @@
 		
 		// FROM EMAIL - WELCOME EMAIL / CONFIRMS ADDRESS
 		function confirmemail(){
-			$this -> user -> confirmEmail();
-			return array("status" => "success");
+			$this -> user -> toggleStatus('confirmed');
+			return "success";
 		}
 
 	
 		// FROM EMAIL - RESET PASSWORD / ALLOWS USER TO RESET PW
+		function confirmAccessToken(){
+			return "success"; // User loaded correctly
+		}
 		function resetPW($password){
 			$this -> user -> setPw($password);
 			return array("status" => "success");
 		}
 
-		function requestHouseAssignment($houseId){
-			// CREATE USERSHOUSES ROW, STATUS REQUESTED
+
+		// REGISTER USER FLOW
+		function fetchHouseList(){
+			$houselist = new HouseList();
+			return $houselist -> getHouseListForSignUp(); // just gets entire table
 		}
+		function requestHouseAssignment($houseId = false){
+			$house = new House();
+			$house -> loadByHouseId($houseId);
+			return $house -> requestAccess($this -> user -> userId);
+		}
+		function createHouse($houseJSON = false){
+			
+			$house = new House();
+			$house -> setContentFromHash($houseJSON);
+			$house -> insert();
+
+			// if there's a house, even if the house isn't official, the user can still start working on it
+			$this -> user -> toggleStatus('active');
+		}
+		
 
 	}

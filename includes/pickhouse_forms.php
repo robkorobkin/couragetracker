@@ -9,7 +9,8 @@
 <form id="houserequest_form" style="display: none">
 	<h4>Select your house!</h4>
 	<p>Welcome <span id="first_name_span"></span>!</p> 
-	<p>Which recovery residence are you associated with?</p>
+	<div id="request_status" style="display: none; border: solid 1px #cc0000; padding: 10px; margin-bottom: 20px;"></div>
+	<p id="registerhouse_header">Which recovery residence are you associated with?</p>
 
 	<button id="startnewhouse_button" type="button" class="btn btn-raised btn-primary">REGISTER A NEW HOUSE</button>
 	
