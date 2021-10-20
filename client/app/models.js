@@ -22,6 +22,18 @@ class BaseList {
 	}
 
 
+	loadList(listJSON){
+		this.mainList.length = 0; // empty it without losing the byte address
+		for(let rowJSON of listJSON){
+			this.mainList.push(this.getNewRowObj(rowJSON)); /// defined in model - list constructor
+		}
+	}
+
+
+
+
+
+
 	// SHARED METHOD = SEARCH FILTER - filters "display" field according to text match
 	search_filter(search_term){
 		search_term = search_term.toLowerCase();
@@ -111,12 +123,19 @@ class Resident {
 					this[field] = residentJSON[field];
 				}
 			}
+			this.name = this.first_name + ' ' + this.last_name;
 
 			this.movein_date_display = (this.movein_date == '') ? '---' : formatDateForOutput(this.movein_date);
 
 
 			if("exams" in residentJSON && residentJSON.exams.length != 0){
 				this.examList.loadForResident(residentJSON.exams, this);
+
+
+				// these could also come from the API...
+				this.lastExam =	formatDateForOutput(resident.examList.lastExam);
+				this.examCount = resident.examList.examCount
+				this.lastScore = resident.examList.lastScore;
 			}
 			else {
 
@@ -189,72 +208,12 @@ class ResidentList extends BaseList {
 		this.search_fields.push('first_name', 'last_name', 'examList.lastExam','examList.examCount','examList.lastScore');
 
 
-		
+		this.sorting_order = "abc";
+		this.sort_by("first_name");
+		this.getNewRowObj = (json) => new Resident(json);
 	}
 
 
-	fetchResidentList(callbackFunction){
-		api.callApi("getResidentList", false, function(response){
-			callbackFunction(response);
-		});
-	}
-
-	loadData(residentData){
-		this.mainList = [];	
-		for(var rJSON of residentData){
-			this.mainList.push(new Resident(rJSON));
-		}
-	}
-
-	loadResident(newResident){
-		var found = false;
-		var residentId = newResident.residentId;
-
-
-		// IF THE RESIDENT IS IN THE ARRAY, REPLACE IT
-		var match = false;
-		for(let rIndex = 0; rIndex < this.mainList.length; rIndex++){
-			if(this.mainList[rIndex].residentId == residentId) {
-				this.mainList[rIndex] = newResident;
-				match = true;
-			}
-		}
-
-		// IF NOT, PUSH IT ONTO THE END
-		if(!match){
-			this.mainList.push(newResident);
-		}
-
-	}
-
-	getResidentByResidentId (residentId, callbackFunction){
-		this.open_resident = residentId;
-		var self = this;
-
-		console.log('about to call api')
-
-		if(residentId == -1) {
-			callbackFunction(new Resident());
-		}
-		else {
-			api.callApi('getFullResidentById', parseInt(residentId), function(resident){
-				var r = new Resident(resident);
-				self.loadResident(r);
-				callbackFunction(r);
-			});
-		}
-	}
-
-
-	delete (residentIdToDelete, callbackFunction){
-		var self = this;
-		api.callApi('deleteResident', parseInt(residentIdToDelete), function(residentList){
-			self.mainList = [];
-			self.loadData(residentList);
-			callbackFunction();
-			
-		})
-	}
 }
 
 
@@ -608,14 +567,9 @@ class HouseList extends BaseList {
 	constructor(){
 		super();
 		this.search_fields.push('street', 'city', 'housename');
+		this.getNewRowObj = (json) => new House(json);
 	}
 
-	loadList(houseListJSON){
-		this.mainList.length = 0; // empty it without losing the byte address
-		for(let hJSON of houseListJSON){
-			this.mainList.push(new House(hJSON));
-		}
-	}
 }
 
 

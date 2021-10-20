@@ -717,7 +717,7 @@ TemplateLoader = {
 				'<h3>UPDATE MEMBERS</h3><br /><br />' +
 
 				// REQUESTS TO JOIN
-				'<b>REQUESTS TO JOIN:</b><br />';
+				'<b>REQUESTS TO JOIN (Check to Accept):</b><br />';
 				for(let user of house.userList.requested){
 					html += '<input type="checkbox" class="requestbox" id="requested_' + user.userId + '" />&nbsp;&nbsp;' +
 							'<label for="requested_' + user.userId + '">' + user.first_name + ' ' + user.last_name + '</label>' +
@@ -726,7 +726,7 @@ TemplateLoader = {
 
 
 				// ACTIVE USERS
-				html += '<br /><br /><br /><b>ACTIVE MEMBERS:</b><br />';
+				html += '<br /><br /><br /><b>ACTIVE MEMBERS (Check to Demote):</b><br />';
 				for(let user of house.userList.active){
 					html += '<input type="checkbox" class="activebox" id="active_' + user.userId + '" />&nbsp;&nbsp;' +
 							'<label for="active_' + user.userId + '">' + user.first_name + ' ' + user.last_name + '</label>' +

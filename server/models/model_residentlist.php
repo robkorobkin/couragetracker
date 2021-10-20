@@ -1,33 +1,24 @@
 <?php 
 
-	Class ResidentList {
-
-
-		// CAN MAKE MORE COMPLICATED, ADD LOGGING, ETC. LATER
-		function handleError($message){
-			echo $message;
-			exit();
-		}
-
+	Class ResidentList extends CT_Model {
 
 		// CONSTRUCT...
 		function __construct(){
 
-			global $db;
-			$this -> db = $db;
+			parent::__construct();
 
-			$this -> mainList = array();
+			$this -> search_fields = array('houseId');
+
+			$this -> tableName = 'residents';
+		}
 
 
-		} 
 
-		function loadByHouseID($houseId){
+		function select($houseId, $fail_gracefully = false){
 
 			// LOAD MAIN LIST
 			if(!$houseId || !is_numeric($houseId)) $this -> handleError("Please provide a HouseId integer. Received: " . $houseId);
-			$config['where'] = 'houseId=' . $houseId;
-			$this -> db -> select("residents", $config);
-			$this -> mainList = $this -> db -> getResponse();
+			parent::select(array('houseId' => $houseId));
 
 			
 			// WHAT IF... WHEN WE SAVE AN EXAM WE ITERATE THE RESIDENT FIELDS ACCORDINGLY
@@ -56,11 +47,13 @@
 			// 	else $this -> mainList[$rIndex]['exams'] = array();
 			// }
 
+			return $this;
+
 		}
 		
 
 		function export(){
-			return $this -> mainList;
+			return $this -> selected_list;
 		}
 
 	}

@@ -21,6 +21,26 @@
 			parent::__construct();
 		}
 
+
+		function fetchSelection($query){
+
+			if(!isset($query -> component) || !in_array($query -> component, array('Residents')))
+				handleError('Component not ok: ' . $query -> component);
+
+			if(!isset($query -> select)) 
+				handleError('Need k:v selection in query.');
+
+			switch($query -> component){
+
+				case 'Residents' :
+					$resident = new Resident();
+					return $resident -> selectRow($query -> select) -> export();
+
+			}
+		}
+
+
+
 		function logout(){
 			$this -> user -> refreshToken();
 			return array("status" => "success");
@@ -41,11 +61,7 @@
 			return $newResident -> export();
 		}
 
-		function getFullResidentById($residentId = false){
-			$resident = new Resident();
-			$resident -> loadFromDB($residentId);
-			return $resident -> export();
-		}
+			
 
 		function updateResident($payload){
 
@@ -79,14 +95,12 @@
 
 		
 	
-		function getResidentList(){
-			if($this -> user -> current_house != 0){
-				$houseId = $this -> user -> current_house['houseId'];
-				$residentList = new ResidentList();
-				$residentList -> loadByHouseID($houseId);
-				return $residentList -> export();
-			}
-			return array(); // if no house selected, return empty set.
+		function fetchResidentsList(){
+
+			$residentList = new ResidentList();
+			return $residentList -> select($this -> user -> current_houseId) -> export();
+
+
 		}
 
 

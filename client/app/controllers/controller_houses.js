@@ -29,10 +29,6 @@ class Houses_Controller extends CT_Controller {
 			['state', 'State']
 		]
 
-
-
-		this.selectionTemplate = (house) => 
-			TemplateLoader.writeHouseMainHTML(house, new UserList()) // should get the actual user list in there
 		
 	}
 

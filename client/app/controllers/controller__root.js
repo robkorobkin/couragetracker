@@ -5,6 +5,14 @@ controllerFactory = (controllerName) => {
 
 	switch(controllerName){
 		
+
+		case 'Residents' : 
+			ViewModel.selected_list = new ResidentList();
+			controller = new Residents_Controller();
+			controller.newObject = (json) => new Resident(json); 
+			return controller;
+
+
 		case 'Blasts' : 
 			ViewModel.selected_list = new BlastList();
 			controller = new Blasts_Controller();
@@ -150,11 +158,18 @@ class CT_Controller {
 	}
 
 
+	_loadSelectionHTML(selected_object){
+		let templateMethod = 'write' + this.component + 'MainHTML';
+		let html = TemplateLoader[templateMethod](selected_object) 
+		this.setMainBody(html);
+	}
+
 	loadSelectionView (){
 
 		let selected_object = ViewModel.selected_object;
+		this._loadSelectionHTML(selected_object); // broken out for easy override in child classes
 
-		this.setMainBody(this.selectionTemplate(selected_object));
+			
 
 		if(!selected_object.isNew){
 			for(var field in selected_object){

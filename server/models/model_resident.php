@@ -1,37 +1,28 @@
 <?php 
 
-	Class Resident extends CT_Model {
+	Class ResidentsModel extends CT_Model {
 
 
-		// CAN MAKE MORE COMPLICATED, ADD LOGGING, ETC. LATER
-		function handleError($message){
-			echo $message;
-			exit();
-		}
-
+		
 
 		// CONSTRUCT...
-		function __construct(){
+		function __construct($api_payload){
 
-			global $db;
-			$this -> db = $db;
+			parent::__construct($api_payload);
 
 
 			// primary key
-			$this -> residentId = 0;
+			$this -> primary_key = 'residentId';
+			$this -> tableName = 'residents';
 
 
 			// set up meta fields
 			$this -> meta_fields = array(
-				'houseId',
-				'examCount',
-				'created',
-				'updated',
+				'houseId' => 0,
+				'examCount' => 0,
+				'created' => date('Y-m-d  h:i:s A'),
+				'updated' => date('Y-m-d  h:i:s A'),
 			);
-			$this -> houseId 	= 0;
-			$this -> examCount 	= 0;
-			$this -> created 	= date('Y-m-d  h:i:s A');
-			$this -> updated 	= date('Y-m-d  h:i:s A');
 
 
 			// set up content fields
@@ -44,78 +35,44 @@
 				"movein_date",
 				"dob"
 			);
-			foreach($this -> content_fields as $f) $this -> $f = '';
 
 
 			$this -> json_fields = array(
 				"acesScore", 
 				"harmScore"
 			);
-			foreach($this -> content_fields as $f) $this -> $f = false;
 
 
-			$this -> exams = array();
+			$this -> search_fields = array('residentId', 'houseId');
+
+			$this -> table = 'residents';
+
+
+			// $this -> exams = new ExamList($api_payload); // must circle back to this
+
+			
 		} 
 
 
 
 // GETTERS
-		
-		// GET ROW FOR INSERT / UPDATE
-		function row(){
-			$row = array();
-			foreach($this -> content_fields as $f) $row[$f] = $this -> $f;
-			foreach($this -> meta_fields as $f) $row[$f] = $this -> $f;
-			return $row;
-		}
-
 
 		// APPEND EXAM DATA FOR API RETURN
 		function export(){
-			$response = $this -> row();
-			$response['residentId'] = $this -> residentId;
-			$response['exams'] = $this -> exams;
-			$response['acesScore'] = $this -> acesScore;
-			$response['harmScore'] = $this -> harmScore;
+			$response = parent::export();
+			// $response['exams'] = $this -> exams -> selected_list;
 			return $response;
 		}
 
-
-// DATA LOADERS
-
-		// READ RESIDENT FROM DB
-		function loadFromDB($residentId){
-
-			// VALIDATE PAYLOAD
-			if(!$residentId || !is_int($residentId)) $this -> handleError("Please provide a ResidentId integer as the payload.");
-
-
-			// QUERY DATABASE FOR RESIDENT
-			$this -> db -> select("residents", array("where" => 'residentId=' . $residentId));
-			$response = $this -> db -> getResponse();
-			if(count($response) == 0) $this -> handleError("Resident not found. ResidentId=" . $residentId);
-			$residentData = $response[0];
-
-
-			// UPDATE INSTANCE WITH DB RESPONSE
-			$this -> residentId = $residentData['residentId'];
-			foreach($this -> content_fields as $f) $this -> $f = $residentData[$f];
-			foreach($this -> meta_fields as $f) $this -> $f = $residentData[$f];
-			foreach($this -> json_fields as $f) {
-				$this -> $f = json_decode($residentData[$f . "JSON"]);
-			}
-
-
-			// LOAD EXAMS
-			// $sql = 'SELECT examId, answers, version, date_taken FROM exams WHERE residentId=' . $this -> residentId;
-			// $this -> db -> sql($sql);
-			// $response = $this -> db -> getResponse();
-			// $this -> exams = $response;
-		}
-
-
 		
+		function selectRow($where){
+			parent::selectRow($where);
+			
+			// $this -> exams -> select($where);
+			// $this -> debug();
 
+			return $this;
+		}
 			
 
 // SETTERS
@@ -126,18 +83,7 @@
 
 // OPERATIONS		
 
-		function insert(){
-			$this -> residentId = $this -> db -> insert("residents", $this -> row());
-		}
-
-		function save(){
-			$this -> db -> update("residents", $this -> row(), "residentId=" . $this -> residentId);
-		}
-
-		function delete(){
-			$sql = "DELETE FROM residents WHERE residentId=" . $this -> residentId;
-			$this->db->sql($sql);
-		}
+		
 
 		function oneMoreExam(){
 

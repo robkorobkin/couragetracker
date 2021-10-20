@@ -33,7 +33,7 @@ let activeController = false;
 /* LAUNCH THE APP */
 $(function(){
 	
-	rootController.loadComponent('Houses');
+	rootController.loadComponent('Residents');
 
 	api.loadUser = function(user){
 		rootController.loadUser(user);

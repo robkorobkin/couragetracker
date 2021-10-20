@@ -1,108 +1,44 @@
 class Residents_Controller extends CT_Controller {
 
-	// RESIDENT LIST VIEW
 
-	loadResidentList (callbackFunction){
+	constructor(settings){
 
-		ViewModel.residentList.fetchResidentList(function(response){
-			ViewModel.residentList.loadData(response);
-			ViewModel.examList.loadFromResidentList(ViewModel.residentList);
-			ViewModel.user.current_house.residentList = ViewModel.residentList;
-			callbackFunction();
-		});
-	}
+		super(settings);
+		
+		this.api = 'admin';
 
-	openResident (residentId) {
+		this.component = 'Residents';
 
-		if(residentId == -1){
-			ViewModel.selected_resident = new Resident();
-			ViewController.loadView('ResidentInfo');
-			return;
-		}
+		this.primaryKey = 'residentId';
 
-		// if rIndex == -1, this returns a blank Resident object
-		ViewModel.residentList.getResidentByResidentId(residentId, function(resident){
-			ViewModel.selected_resident = resident;
-			ViewController.loadView('ResidentDash');
-		});
-	}
+		this.tableConfiguration = [
+			['residentId', 'ID'],
+			['name', 'Name'],
+			['movein_date', 'Move In'],
+			['acesScoreVal', 'ACE'],
+			['harmScoreVal', 'HARM'],
+			['examCount', 'Count'],
+			['lastExamDate', 'Last Assessed'],
+			['lastScore', 'Last Score']
+		]
 
-	reloadResident (updatedResident){
-
-		ViewModel.examTemplate = recovery_capital_assessmentJSON;
-
-
-		let r = new Resident(updatedResident);
-		ViewModel.selected_resident = r
-		ViewModel.residentList.loadResident(r); 
-		ViewModel.isLoadingNewResident = (updatedResident.isNew);
-
-		if(updatedResident.isNew){
 			
-			ViewController.loadView('ResidentList');
-		}
-		else ViewController.loadView('ResidentDash');
+
+
+
+
 	}
 
-	loadResidentListView (){
 
-
-		// LOAD THE HTML
-		this.setLeftHeader('Residents' +
-							'<button type="button" class="btn btn-raised btn-success" ' +
- 							'style="float: right" ' +
- 							// ' style="clear: both; display: block; margin: 10px 0 20px;"' +
- 							' id="addresident_button"> Add Resident</button>');
-
-		this.setMainBody(TemplateLoader.writeResidentListMainHTML());
-		
-
-		$('#mainTable th').click((e)=>{
-			let sort_field = e.target.id.split('-')[1];
-			ViewModel.residentList.sort_by(sort_field);
-			ViewController._loadResidentListTable();
-		});
-
-
-		// ATTACH SEARCH BAR
-		$('#mainSearch').off("keyup").keyup(function(){
-			var search_term = $('#mainSearch').val();
-			ViewModel.residentList.search_filter(search_term);
-			ViewController._loadResidentListTable();
-		})
-
-		$('#addresident_button').click(function(){
-			ViewController.openResident(-1);
-		})
-
-		this.loadResidentList(function(){
-
-			// a bit of a hack - if you just added one, put it on top
-			if(ViewModel.isLoadingNewResident){
-				ViewModel.residentList.sorting_order = "abc";
-				ViewModel.residentList.sorting_by = "created";
-				ViewModel.residentList.sort_by("created")				
-			}
-			ViewController._loadResidentListTable();
-		})
-	}
-
-	_loadResidentListTable (){
-		
-		var html = TemplateLoader._writeResidentListTableHTML(ViewModel.residentList);
-
-		$('#residentTable').html(html);
-
-		$('#residentTable tr').click(function(){
-			var residentId = this.id.split('_')[1];
-			ViewController.openResident(residentId);
-		})
+	loadListView (){
+		this.setHeader('Residents', 'Add Resident');
+		super.loadListView();
 	}
 
 	// PERSON / TAKE EXAM VIEW
 
 	// SHARED SUBNAV
-	handleResidentSubNav (mode){
+	_handleResidentSubNav (mode){
 		$('#dash_tab').click(() => ViewController.loadView("ResidentDash"));
 
 		$('#takenew_tab').click(() => {
@@ -121,14 +57,14 @@ class Residents_Controller extends CT_Controller {
 
 
 	// DASHBOARD VIEW - LOADS CHART, HAS "POST RANDOM" BUTTON, ToDo: SHOW EXAM TABLE
-	loadResidentDashView (){
+	loadSelectionView (){
 
 		let selected_resident = ViewModel.selected_resident;
 		ViewModel.examList = selected_resident.examList;
 
 
 		// MAIN BODY + LOAD
-		let main_html = TemplateLoader.writeResidentDashMainHTML(selected_resident) +
+		let main_html = TemplateLoader.writeResidentDashMainHTML(selected_resident) + // includes subnav
 						TemplateLoader.writeExamListMainHTML() + // just presents table architecture
 						'<br /><br /><br />' + 
 						TemplateLoader.writeQbyQHTML(selected_resident.examList, ViewModel.examTemplate); // Question by Question
@@ -147,7 +83,7 @@ class Residents_Controller extends CT_Controller {
 		})
 
 
-		this.handleResidentSubNav('dash');
+		this._handleResidentSubNav('dash');
 
 
 		this._loadExamListTable();

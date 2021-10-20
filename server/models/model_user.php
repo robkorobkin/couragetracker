@@ -80,7 +80,7 @@
 		}
 		
 
-		function select($key_value){
+		function select($key_value, $fail_gracefully = false){
 
 			parent::select($key_value);
 
@@ -165,7 +165,7 @@
 					'where u.userId=' . $this -> userId . ' AND u.houseId=h.houseId';
 
 			$this -> db -> sql($sql);
-			$this -> houses = $this -> db -> getResponse();
+			$this -> houses = $this -> db -> getResponse(true);
 
 			if($this -> status != 'active') return;
 

@@ -1,101 +1,158 @@
 <?php
 
-
-	// DEFINE GLOBAL STATICS
-	$db = new Database();
-	$db -> connect();
-
-	
-	
 	
 	// DEFINE ROOT CLASS
 	Class CT_Model {
 
-		function __construct(){	
+		function __construct($api_payload){	
 			global $db, $app_user;
 			$this -> db = $db;
 			$this -> user = $app_user;
 
+			$this -> content_fields = array();
+			$this -> meta_fields = array();
 			$this -> json_fields = array();
+			$this -> search_fields = array();
+
+
+			// VALIDATE PAYLOAD
+			$this -> where = $api_payload -> where;
+			$this -> content = $api_payload -> content;
+
+
 		}
 
 
-		// HANDLE ERROR - COULD / SHOULD ALSO INCLUDE LOGGING
-		function _handleError($message){
-			$response = array(
-				"status" => "error",
-				"message" => $message
-			);
-			exit(json_encode($response, JSON_PRETTY_PRINT));
+	
+
+		// API METHODS
+		function fetchObject($payload){
+			return $this -> selectRow($payload -> where) -> export();
 		}
 
 
-		/**** UTILITIES ****/
-
-		// GENERATE GUID
-		function _generateKey(){
-
-			return bin2hex(random_bytes(5));
-
-			//ctype_xdigit - will check if incoming keys could have been generated with this
-		}
-
-		// see if PW meets standards - MAKE SURE IT ISN'T A SQL INJECTION, CURRENTLY EMPTY
-		function _checkPW($password){
-			return true;
-		}
-
-		function password_verify($newpw, $oldpw){
-			if(password_verify($newpw, $oldpw)) return true;
-			return false;
+		function fetchList($payload){
+			return $this -> select($payload -> where) -> selected_list;
 		}
 
 
-		/**** SHARED FUNCTIONS ****/
+		function create($payload){
+			echo "flag 1.  ";
+			$this -> newSelectedObject() -> loadContent($payload -> content);
+			echo "flag 2.  ";
+			$pk = $this -> db -> insert($this -> table, $this -> row());
+			return $this -> selectRow(array($this -> primary_key => $pk)) -> export();
+		}
 
-		// GET ROW FOR INSERT / UPDATE
+
+		function update($payload){
+			$this -> selectRow($payload -> where) -> loadContent($payload -> content);
+			$whereStr = $this -> primary_key . "=" . $this -> selected_object -> {$this -> primary_key};
+			return $this -> db -> update($this -> table, $this -> row(), $whereStr) -> export();
+		}
+
+
+		function delete($payload){
+			$this -> selectRow($payload -> where);
+			$whereStr = $this -> primary_key . "=" . $this -> selected_object -> {$this -> primary_key};
+			$sql = "DELETE FROM " . $this -> table . " WHERE " . $whereStr;
+			$this->db->sql($sql);
+			unset($payload -> where[$this -> primary_key]);
+			return $this -> select($payload -> where) -> selected_list;
+		}
+		
+
+
+
+		// PUBLIC METHODS, WITHIN SERVER / NOT ACROSS API
+
+		// SELECTED OBJECT TO API RESPONSE 
+		// - AS LONG AS OBJECT HAS MAINTAINED STATE OKAY, THIS SHOULD WORK
+		// - MAKING IT A METHOD ENABLES YOU TO ADD STUFF IN CHILD CLASSES
+		function export(){
+
+			$response = array();
+			print_r($this -> selected_object);
+
+		}
+
+
+		// NEW SELECTED OBJECT
+		function newSelectedObject(){
+			$this -> selected_object = new stdClass();
+
+			foreach($this -> content_fields as $f) 
+				$this -> selected_object -> $f = '';
+			
+
+			foreach($this -> meta_fields as $f => $v) 
+				$this -> selected_object -> $f = $v;
+
+
+			foreach($this -> json_fields as $f) {
+				$this -> selected_object -> $f = new stdClass();
+			}
+			return $this;
+		}
+
+
+
+		// GET DB ROW FROM SELECTED OBJECT
 		function row(){
 			$row = array();
-			foreach($this -> content_fields as $f) $row[$f] = $this -> $f;
-			foreach($this -> meta_fields as $f) $row[$f] 	= $this -> $f;
-			foreach($this -> json_fields as $f) $row[$f . 'JSON'] = json_encode($this -> $f);
+			
+			foreach($this -> content_fields as $f) 
+				$row[$f] = $this -> selected_object -> $f;
+			
+
+			foreach($this -> meta_fields as $f => $v) 
+				$row[$f] 	= $this -> selected_object -> $f;
+
+
+			foreach($this -> json_fields as $f) {
+				$row[$f . 'JSON'] = json_encode($this -> selected_object -> $f);
+			}
+
 			return $row;
 		}
 
 
-		function loadFromRow($row){
-			foreach($this -> content_fields as $f) 	$this -> $f = $row[$f];
-			foreach($this -> meta_fields as $f) 	$this -> $f = $row[$f];
-			$pk = $this -> primary_key;
-			$this -> $pk = (int) $row[$pk];
-			return $row;
+		// UPDATE SELECTED OBJECT FROM API REQUEST
+		function loadContent($content){
+
+			foreach($this -> content_fields as $f) 	{
+				if(!isset($content -> $f)) handleError("Payload does not include the field: " . $f);
+				$this -> selected_object -> $f = $this -> db -> escapeString($content -> $f);
+			}
+
+
+			foreach($this -> json_fields as $f) {
+				if(!isset($content -> $f)) $v = false;
+				else if(is_object($content -> $f)) handleError('Must be an object: ' . $f);
+				else $v = $content -> $f;
+				$this -> selected_object -> $f = $v;
+			}
+			
 		}
 
 
-		function setContentFromHash($hash){
-			foreach($this -> content_fields as $f){
-				if(!isset($hash -> $f)) $this -> handleError("Payload does not include the field: " . $f);
-				$this -> $f = $this -> db -> escapeString($hash -> $f);
-			}
-
-			foreach($this -> json_fields as $f){
-				$this -> $f = $hash -> $f;
-			}
-		}
 
 
-
-		function select($key_value){
+		// LOADS SELECTED LIST FROM DB
+		function select($key_value, $fail_gracefully = false){
 
 			$key_value = (array) $key_value; // api might pass it in as an object
 
 
 			// VALIDATE PAYLOAD
 			if(!$key_value || !is_array($key_value)) 
-				$this -> _handleError("Please provide a key value pair.");
+				handleError("Please provide a key value pair for the where.");
 
 			$f = array_key_first($key_value);
-			$v = $this -> db -> escapeString($key_value[$f]);
+
+			$v = $key_value[$f];
+			if(!is_string($v) && !is_numeric($v)) handleError("Please provide a key value pair for the where.");
+			$v = $this -> db -> escapeString($v);
 
 
 			// ARE WE SEARCHING BY A LEGAL FIELD?
@@ -109,27 +166,84 @@
 
 			// MAKE SELECTION
 			$sql = 'SELECT * from ' . $this -> tableName . ' where ' . $f . '="' . $v . '"';
-			$this -> db -> sql($sql);
-			$response = $this -> db -> getResponse();
-			if(count($response) == 0) 
-				handleError("Row not found.");
-			$db_row = $response[0];
-			$this -> loadFromRow($db_row);
+			$this -> selected_list = $this -> db -> sql($sql) -> getResponse($fail_gracefully);
 
 
+			// UNZIP JSON 
+			foreach($this -> selected_list as $rowIndex => $row) {
+				foreach($this -> json_fields as $f) {
+					$this -> selected_list[$rowIndex][$f] = json_decode($this -> selected_list[$rowIndex][$f . 'JSON']);
+					unset($this -> selected_list[$rowIndex][$f . 'JSON']);
+				}
+			}
+
+
+			
+			return $this;
+		}
+
+		// LOADS SELECTED OBJECT FROM DB OFF OF WHERE (K => V)
+		function selectRow($key_value){
+			$this -> selected_object = new stdClass();
+
+			$db_row = $this -> select($key_value) -> selected_list[0];
+
+			foreach($this -> content_fields as $f){
+				$this -> selected_object -> $f = $db_row[$f];
+			}
+			print_r($selected_object);
+			
+			foreach($this -> meta_fields as $f => $v){
+				$this -> selected_object -> $f = $db_row[$f];
+			}
+			print_r($selected_object);
+			
+			foreach($this -> json_fields as $f){
+				$v = $db_row[$f . 'JSON'] != '' ? json_decode($db_row[$f . 'JSON']) : false;
+				$this -> selected_object -> $f = $v;
+			}
+			print_r($selected_object);
 
 			return $this;
 		}
+
+
+
+
+
+		/**** UTILITIES ****/
+
+		// GENERATE GUID
+		function generateKey(){
+
+			return bin2hex(random_bytes(5));
+
+			//ctype_xdigit - will check if incoming keys could have been generated with this
+		}
+
+		// see if PW meets standards - MAKE SURE IT ISN'T A SQL INJECTION, CURRENTLY EMPTY
+		function checkPW($password){
+			return true;
+		}
+
+		function password_verify($newpw, $oldpw){
+			if(password_verify($newpw, $oldpw)) return true;
+			return false;
+		}
+
+
+		/**** SHARED FUNCTIONS ****/
+		function debug($prefix = ''){
+			$skip = array('db','user','json_fields','search_fields','tableName','primary_key','meta_fields','content_fields');
+			foreach($this as $k => $v){
+				if(in_array($k, $skip)) continue;
+				echo $prefix . $k . "\n"; 
+				if(is_object($v) && isset($v -> debug)) { // at this point, aces / harm are objects, but not Objects
+					print_r($v);
+					$v -> debug('----/');
+				}
+				else print_r($v); 
+				echo "\n\n";
+			}
+		}
 	}
-
-
-	// INCLUDE CHILD CLASSES
-	require_once('model_exam.php');
-	require_once('model_house.php');
-	require_once('model_houselist.php');
-	require_once('model_resident.php');
-	require_once('model_residentlist.php');
-	require_once('model_user.php');
-
-
-	

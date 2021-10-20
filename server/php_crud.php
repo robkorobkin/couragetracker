@@ -355,17 +355,20 @@ class Database{
     /*
      * Return Data
      */
-    public function getResponse(){
+    public function getResponse($failGracefully = false){
         $val = $this->response;
         $this->response = array();
         if(count($val) == 0) {
-            $this -> conn -> error = 'No Data Returned: ' . $this->getQuery;
-            $this -> error();
+
+            if($failGracefully) return array();
+
+            $error_message = 'No Data Returned: ' . $this->getQuery;
+            handleError($error_message);
         }
         return $val;
     }
 
-    public function getRow($failGracefully){
+    public function getRow($failGracefully = false){
         $val = $this->response;
         $this->response = array();
         if(count($val) == 0) {

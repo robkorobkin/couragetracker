@@ -45,7 +45,7 @@
 		}
 
 
-		function select($key_value){
+		function select($key_value, $fail_gracefully = false){
 			
 
 			parent::select($key_value);
@@ -87,25 +87,7 @@
 
 
 		// THIS COULD ALSO BE A METHOD ON A USER OBJECT
-		function requestAccess($userId = false){
-
-			// VALIDATE PAYLOAD
-			if(!$userId || !is_int($userId)) exit ("Please provide a userId as the payload.");
-
-			$row = array(
-				'userId'  => $userId,
-				'houseId' => $this -> houseId,
-				'created' => date('Y-m-d  h:i:s A'),
-				'updated' => date('Y-m-d  h:i:s A'),
-				'status'  => 'requested'	
-			);
-
-			$this -> db -> insert("usershouses", $row);
-
-		}
 		
-
-
 		function updateMembers($permissionsList = false){
 
 			$permissionsList = (array) $permissionsList;
