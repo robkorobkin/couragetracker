@@ -8,9 +8,6 @@
 		// CONSTRUCT...
 		function __construct($api_payload){
 
-			parent::__construct($api_payload);
-
-
 			// primary key
 			$this -> primary_key = 'residentId';
 			$this -> tableName = 'residents';
@@ -22,6 +19,8 @@
 				'examCount' => 0,
 				'created' => date('Y-m-d  h:i:s A'),
 				'updated' => date('Y-m-d  h:i:s A'),
+				'lastExamDate' => '',
+				'lastScore' => 0
 			);
 
 
@@ -45,54 +44,50 @@
 
 			$this -> search_fields = array('residentId', 'houseId');
 
-			$this -> table = 'residents';
-
 
 			// $this -> exams = new ExamList($api_payload); // must circle back to this
+
+
+			parent::__construct($api_payload);
 
 			
 		} 
 
 
 
-// GETTERS
+		// WHEN RETRIEVING AN OBJECT, APPEND THE EXAMS
+		function fetchObject($payload){
 
-		// APPEND EXAM DATA FOR API RETURN
-		function export(){
-			$response = parent::export();
-			// $response['exams'] = $this -> exams -> selected_list;
-			return $response;
-		}
-
-		
-		function selectRow($where){
-			parent::selectRow($where);
-			
-			// $this -> exams -> select($where);
-			// $this -> debug();
-
-			return $this;
-		}
+			$resident = parent::fetchObject($payload);
 			
 
-// SETTERS
-
+			// FETCH EXAMS - REDUNDANT WITH EXAMS MODEL, BUT IT WORKS
+			$sql = 'SELECT * from exams where residentId=' . $resident -> residentId;
+			$exams = $this -> db -> sql($sql) -> getResponse(true);
+			foreach($exams as $rowIndex => $row) {
+				$exams[$rowIndex]['answers'] = json_decode($exams[$rowIndex]['answersJSON']);
+				unset($this -> selected_list[$rowIndex]['answersJSON']);
+			}
 		
+			$resident -> exams = $exams;
 
-		
-
-// OPERATIONS		
-
-		
-
-		function oneMoreExam(){
-
-			$sql = 'UPDATE residents set examCount = examCount + 1 AND updated = "' . date('Y-m-d h:i:s A') . '" ' .
-					'where residentId=' . $this -> residentId;
-					
-			$this->db->sql($sql);
+			return $resident;
 		}
 
+
+
+
+		// VALIDATE CREATE / UPDATE
+		function loadContent($content){
+
+			parent::loadContent($content);
+
+			$status_list = array('Current Resident', 'Former Resident');
+			if(!in_array($this -> selected_object -> status, $status_list)) 
+				handleError('Status must be Current Resident or Former Resident.');
+
+			
+		}
 		
 
 

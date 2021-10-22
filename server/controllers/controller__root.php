@@ -5,7 +5,7 @@
 	class CT_Controller {
 
 
-		function LoadGlobalEnvironment(){
+		static function LoadGlobalEnvironment(){
 
 			global $db, $sendgridClient;
 
@@ -19,9 +19,12 @@
 
 			// AND THE HANDLER, DECLARING IT THIS WAY SHOULD PUT IT INTO THE GLOBAL NAMESPACE
 			function handleError($message){
-				global $api_response;
+				global $api_response, $db;
 				$api_response["status"] = "error";
 				$api_response["message"] = $message;
+
+				// toggle this off if in prod
+				$api_response["sql"] = $db -> getQuery;
 
 				// COULD LOG ERROR HERE?
 
@@ -89,14 +92,14 @@
 				handleError("Payload must be an object.");
 			}
 			if(!isset($api_payload -> where)){
-				$api_payload -> where = new stdClass();
+				$api_payload -> where = false;
 			}
-			if(!is_object($api_payload -> where)) handleError('where must be a k/v hash object');
+			else if(!is_object($api_payload -> where)) handleError('where must be a k/v hash object');
 			
 			if(!isset($api_payload -> content)){
-				$api_payload -> content = new stdClass();
+				$api_payload -> content = false;
 			}
-			if(!is_object($api_payload -> where)) handleError('content must be a k/v hash object');
+			else if(!is_object($api_payload -> content)) handleError('content must be a k/v hash object');
 
 
 

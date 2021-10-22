@@ -8,20 +8,10 @@
 			global $db, $app_user;
 			$this -> db = $db;
 			$this -> user = $app_user;
-
-			$this -> content_fields = array();
-			$this -> meta_fields = array();
-			$this -> json_fields = array();
-			$this -> search_fields = array();
-
-
-			// VALIDATE PAYLOAD
-			$this -> where = $api_payload -> where;
-			$this -> content = $api_payload -> content;
-
-
 		}
 
+
+		
 
 	
 
@@ -37,27 +27,38 @@
 
 
 		function create($payload){
-			echo "flag 1.  ";
+			if(!$payload -> content) handleError("Must have content.");
 			$this -> newSelectedObject() -> loadContent($payload -> content);
-			echo "flag 2.  ";
-			$pk = $this -> db -> insert($this -> table, $this -> row());
+			$pk = $this -> db -> insert($this -> tableName, $this -> row());
 			return $this -> selectRow(array($this -> primary_key => $pk)) -> export();
 		}
 
 
 		function update($payload){
+			if(!$payload -> where || !$payload -> content) handleError("Must have both where and content.");
+			$whereStr = $this -> buildWhereStr($payload -> where);
 			$this -> selectRow($payload -> where) -> loadContent($payload -> content);
-			$whereStr = $this -> primary_key . "=" . $this -> selected_object -> {$this -> primary_key};
-			return $this -> db -> update($this -> table, $this -> row(), $whereStr) -> export();
+			$this -> db -> update($this -> tableName, $this -> row(), $whereStr);
+			return $this -> export();
 		}
 
 
 		function delete($payload){
+
+			// VALIDATE
+			if(!$payload -> where) handleError("Must have both where.");
+			$whereStr = $this -> buildWhereStr($payload -> where);
+			if(!isset($payload -> where -> {$this -> primary_key} )) handleError("Must have primary key to delete");
+
+
+			// DELETE ROW AND UPDATE WHERE
 			$this -> selectRow($payload -> where);
 			$whereStr = $this -> primary_key . "=" . $this -> selected_object -> {$this -> primary_key};
-			$sql = "DELETE FROM " . $this -> table . " WHERE " . $whereStr;
-			$this->db->sql($sql);
-			unset($payload -> where[$this -> primary_key]);
+			$this -> db -> update($this -> tableName, array("status" => "deleted"), $whereStr);
+			unset($payload -> where -> {$this -> primary_key});
+
+
+			// RETURN LIST FOR THE REST OF THE WHERE
 			return $this -> select($payload -> where) -> selected_list;
 		}
 		
@@ -69,10 +70,45 @@
 		// SELECTED OBJECT TO API RESPONSE 
 		// - AS LONG AS OBJECT HAS MAINTAINED STATE OKAY, THIS SHOULD WORK
 		// - MAKING IT A METHOD ENABLES YOU TO ADD STUFF IN CHILD CLASSES
-		function export(){
+		function buildWhereStr($where){
 
-			$response = array();
-			print_r($this -> selected_object);
+			$where_str = '';
+
+			if(!is_array($where) && !is_object($where)) handleError('please submit where as a key value pair');
+
+			foreach($where as $k => $v) {
+				
+				if(!is_string($v) && !is_numeric($v)) handleError("Please provide a key value pair for the where.");
+				$v = $this -> db -> escapeString($v);
+
+
+				// ARE WE SEARCHING BY A LEGAL FIELD?
+				if(!in_array($k, $this -> search_fields)) 
+					handleError("You're not currently allowed to search by: " . $k);
+
+				if($k == 'email' && !(filter_var($v, FILTER_VALIDATE_EMAIL))) {
+					handleError("Not a valid email.");
+				}
+
+				if($where_str != '') $where_str .= ' AND ';
+				$where_str .= $k . '="' . $v . '"';
+
+			}
+
+			if(in_array('status', $this -> content_fields)) $where_str .= ' AND status <> "deleted"';
+
+			return $where_str;
+
+		}
+
+
+		function validateContent(){
+
+		}
+
+
+		function export(){
+			return $this -> selected_object;
 
 		}
 
@@ -120,6 +156,9 @@
 		// UPDATE SELECTED OBJECT FROM API REQUEST
 		function loadContent($content){
 
+			if(!$content) handleError("No content in payload");
+			
+
 			foreach($this -> content_fields as $f) 	{
 				if(!isset($content -> $f)) handleError("Payload does not include the field: " . $f);
 				$this -> selected_object -> $f = $this -> db -> escapeString($content -> $f);
@@ -139,33 +178,11 @@
 
 
 		// LOADS SELECTED LIST FROM DB
-		function select($key_value, $fail_gracefully = false){
-
-			$key_value = (array) $key_value; // api might pass it in as an object
-
-
-			// VALIDATE PAYLOAD
-			if(!$key_value || !is_array($key_value)) 
-				handleError("Please provide a key value pair for the where.");
-
-			$f = array_key_first($key_value);
-
-			$v = $key_value[$f];
-			if(!is_string($v) && !is_numeric($v)) handleError("Please provide a key value pair for the where.");
-			$v = $this -> db -> escapeString($v);
-
-
-			// ARE WE SEARCHING BY A LEGAL FIELD?
-			if(!in_array($f, $this -> search_fields)) 
-				handleError("You're not currently allowed to search by: " . $f);
-
-			if($f == 'email' && !(filter_var($v, FILTER_VALIDATE_EMAIL))) {
-				handleError("Not a valid email.");
-			}
+		function select($where, $fail_gracefully = false){
 
 
 			// MAKE SELECTION
-			$sql = 'SELECT * from ' . $this -> tableName . ' where ' . $f . '="' . $v . '"';
+			$sql = 'SELECT * from ' . $this -> tableName . ' where ' . $this -> buildWhereStr($where);
 			$this -> selected_list = $this -> db -> sql($sql) -> getResponse($fail_gracefully);
 
 
@@ -188,21 +205,10 @@
 
 			$db_row = $this -> select($key_value) -> selected_list[0];
 
-			foreach($this -> content_fields as $f){
-				$this -> selected_object -> $f = $db_row[$f];
+
+			foreach($db_row as $k => $v){
+				$this -> selected_object -> $k = $v;
 			}
-			print_r($selected_object);
-			
-			foreach($this -> meta_fields as $f => $v){
-				$this -> selected_object -> $f = $db_row[$f];
-			}
-			print_r($selected_object);
-			
-			foreach($this -> json_fields as $f){
-				$v = $db_row[$f . 'JSON'] != '' ? json_decode($db_row[$f . 'JSON']) : false;
-				$this -> selected_object -> $f = $v;
-			}
-			print_r($selected_object);
 
 			return $this;
 		}

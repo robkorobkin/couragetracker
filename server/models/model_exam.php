@@ -1,70 +1,48 @@
 <?php 
 
-	Class Exam extends CT_Model {
+	Class ExamsModel extends CT_Model {
 
-
-		// CAN MAKE MORE COMPLICATED, ADD LOGGING, ETC. LATER
-		function handleError($message){
-			echo $message;
-			exit();
-		}
 
 
 		// CONSTRUCT...
-		function __construct(){
+		function __construct($api_payload){
 
-			global $db;
-			$this -> db = $db;
+			
 
-			$this -> examId	= 0;
+			$this -> tableName = 'exams';
 
 
 			$this -> meta_fields = array(
-				'examGuid',
-				'residentId',
-				'userId',
-				'blastId',
-				'created',
-				'updated'
+				'examGuid' => $this -> generateKey(),
+				//'userId' => $this -> user -> userId, // ToDo: fix this once auth system is back in place
+				'blastId' => 0,
+				'created' => date('Y-m-d  h:i:s A'),
+				'updated' => date('Y-m-d  h:i:s A'),
+				'submittedVia' => 'admin'
 			);
-			$this -> examGuid = uniqid();
-			$this -> residentId = 0;
-			$this -> userId = 0;
-			$this -> blastId = 0;
-			$this -> created = date('Y-m-d  h:i:s A');	
-			$this -> updated = date('Y-m-d  h:i:s A');
-
-
+			
 			$this -> content_fields = array(
 				'version',
 				'date_taken',
 				'status',
-				'submittedVia'
+				'residentId',
+				'userId'
 			);
-
-			$this -> version = 1;
-			$this -> date_taken = '';
-			$this -> status	= 'completed';
-			$this -> submittedVia = 'admin';
 
 
 			$this -> json_fields = array(
 				'answers'
 			);
-			$this -> answers = false;
 
+			$this -> search_fields = array(
+				'residentId', 'blastId', 'houseId'
+			);
 
-			$this -> resident = new Resident();
+			parent::__construct($api_payload);
+
 
 		} 
 
-// GET ROW FOR INSERT / UPDATE
-		function row(){
-			$row = array();
-			foreach($this -> content_fields as $f) $row[$f] = $this -> $f;
-			foreach($this -> meta_fields as $f) $row[$f] = $this -> $f;
-			return $row;
-		}
 
 
 // DATA LOADERS
@@ -114,22 +92,16 @@
 
 		
 
-// OPERATIONS		
 
-		function insert(){
-			print_r($this -> row());
-			$this -> examId = $this -> db -> insert("exams", $this -> row());
+
+		function oneMoreExam(){
+
+			$sql = 'UPDATE residents set examCount = examCount + 1 AND updated = "' . date('Y-m-d h:i:s A') . '" ' .
+					'where residentId=' . $this -> residentId;
+					
+			$this->db->sql($sql);
 		}
 
-		// function save(){
-		// 	$this -> db -> update("residents", $this -> row, "residentId=" . $this -> residentId);
-		// }
-
-		function delete(){
-			$sql = 'UPDATE exams set status="DELETED" where examId=' . $this -> examId;
-			$this -> db -> sql($sql);
-		}
-		
 
 
 

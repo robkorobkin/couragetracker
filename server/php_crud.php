@@ -30,8 +30,11 @@ class Database{
 	private $connection = false; // Connection status
     private $conn = ""; // DB Connection
 	private $response = array(); // Results from Queries
-    private $getQuery = ""; // SQL return
     private $numRows = ""; // Return rows number
+
+
+    public  $getQuery = ""; // SQL return 
+
 
     /*
      * Construct
@@ -163,6 +166,9 @@ class Database{
      */
 	public function sql($sql){
         $query = $this->conn->query($sql);
+
+        
+        $this -> response = array();
 
         $this->getQuery = $sql;
         if($query){
@@ -362,7 +368,7 @@ class Database{
 
             if($failGracefully) return array();
 
-            $error_message = 'No Data Returned: ' . $this->getQuery;
+            $error_message = 'No Data Returned';
             handleError($error_message);
         }
         return $val;
@@ -375,7 +381,7 @@ class Database{
 
             if($failGracefully) return false;
 
-            $this -> conn -> error = 'No Data Returned: ' . $this->getQuery;
+            $this -> conn -> error = 'No Data Returned';
             $this -> error();
         }
         return $val[0];
